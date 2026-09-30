@@ -13,3 +13,7 @@ Local browser walkthrough completed all six steps, selected two weekly slots, su
 ## Production routing
 
 Vite's proxy is development-only. Public hosting must route `/api` to the Java backend through a same-origin reverse proxy. Do not deploy the static frontend alone and claim the demo works.
+
+## Discovery milestone
+
+Completed profiles can now open ranked recommendations, view contribution breakdowns and fictional projects, and like/pass candidates. Demo actions are isolated in React memory. See recommendation-system.md for synthetic-candidate disclosure and scoring limitations.
