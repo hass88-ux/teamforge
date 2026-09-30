@@ -28,3 +28,4 @@ See [architecture](docs/architecture.md) and [delivery plan](docs/delivery-plan.
 
 Foundation verified locally: backend Maven verify (including health integration test), frontend lint, and frontend production build. CI repeats these checks. The landing page is an early product preview, not the completed demo.
 
+- Validated demo onboarding draft API (not yet connected to the frontend).
