@@ -6,7 +6,7 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 
 ## Current implementation
 
-- React + TypeScript frontend scaffold (Vite).
+- React + TypeScript landing page and six-step interactive demo onboarding (Vite).
 - Java 21 Spring Boot API with health probes and a startup/health integration test.
 - Architecture and ten-day delivery plan.
 
@@ -20,7 +20,7 @@ Frontend checks: run `npm run build` inside `frontend`.
 
 ## Planned product
 
-Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. These features are not yet implemented.
+Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Onboarding is implemented; the remaining planned features are not yet implemented.
 
 See [architecture](docs/architecture.md) and [delivery plan](docs/delivery-plan.md).
 
@@ -28,4 +28,4 @@ See [architecture](docs/architecture.md) and [delivery plan](docs/delivery-plan.
 
 Foundation verified locally: backend Maven verify (including health integration test), frontend lint, and frontend production build. CI repeats these checks. The landing page is an early product preview, not the completed demo.
 
-- Validated demo onboarding draft API (not yet connected to the frontend).
+- Validated demo onboarding draft API connected to the frontend; drafts are temporary and not persisted.
