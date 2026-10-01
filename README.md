@@ -14,6 +14,8 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 
 ## Local development
 
+Windows: after installing dependencies and building the backend, run `./scripts/start-local.ps1` from PowerShell to start all three services in hidden background processes. Open `http://127.0.0.1:5173/`. Logs are in `%TEMP%/teamforge-local`. This launcher uses the last built backend JAR; run Maven verify after backend changes before restarting it. Services remain local and do not create a public deployment.
+
 Backend: install Java 21 and Maven, then run `mvn -f backend/pom.xml spring-boot:run`.
 Health: `http://localhost:8080/actuator/health`.
 Backend checks: `mvn -f backend/pom.xml verify`.
