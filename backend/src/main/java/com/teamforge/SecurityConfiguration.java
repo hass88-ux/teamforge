@@ -21,7 +21,7 @@ class SecurityConfiguration {
   http.authorizeHttpRequests(auth -> auth
     .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
     .requestMatchers("/api/auth/csrf", "/api/auth/signup", "/api/auth/login", "/api/demo/**", "/api/onboarding/validate", "/actuator/health", "/actuator/health/**").permitAll()
-    .requestMatchers("/api/auth/me", "/api/profiles/me", "/api/profiles/me/visibility", "/api/discovery/**").authenticated().anyRequest().denyAll())
+    .requestMatchers("/api/auth/me", "/api/profiles/me", "/api/profiles/me/visibility", "/api/discovery/**", "/api/matches/**").authenticated().anyRequest().denyAll())
    .csrf(csrf -> csrf.ignoringRequestMatchers("/api/demo/**", "/api/onboarding/validate"))
    .formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
    .exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, ex) -> response.sendError(401)))

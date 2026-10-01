@@ -5,3 +5,5 @@ Real accounts collect email and a password hash for authentication, plus the use
 The optional GitHub connection is not implemented yet. No private GitHub repository data or OAuth tokens are collected. Demo profiles, projects, matches, and scripted replies use demo labels and identify simulated replies. Demo profile drafts and collaboration state are temporary and isolated from persistent accounts.
 
 Email verification, deletion/export controls, retention policies, a public privacy notice, and account recovery are not yet implemented. The current local application is not a launched public account service. Fictional QA accounts used for local verification do not count as people or traction.
+
+Real decisions and conversations now persist. Only the two active matched members can access messages; existing matches remain when either user hides discovery visibility. Unmatching revokes access for both people and prevents further contact in this preview. Closed match/message records remain stored. No email notification or scripted reply is sent in real conversations. A public privacy notice, retention policy, and deletion/export controls are still release work.

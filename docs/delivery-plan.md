@@ -27,4 +27,4 @@ Use focused changes and targeted tests. Avoid unnecessary model inference, redun
 
 ## Current milestone and next priorities
 
-Local demo, accounts, profile persistence, and opt-in real discovery are implemented. Next: persisted likes/passes and mutual matches; matched-user messaging/coffee proposals; real projects/team membership; optional GitHub enrichment; a deployable beta with PostgreSQL and HTTPS; recovery, abuse controls, deletion/privacy notice; responsive/accessibility polish and honest evaluation. These remain release work, not completed features.
+Local demo, accounts, profile persistence, and opt-in real discovery are implemented. Persistent likes/passes, mutual matches, and matched-user messaging are implemented. Next: real coffee proposals; real projects/team membership; optional GitHub enrichment; a deployable beta with PostgreSQL and HTTPS; recovery, abuse controls, deletion/privacy notice; responsive/accessibility polish and honest evaluation. These remain release work, not completed features.

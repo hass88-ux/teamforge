@@ -14,3 +14,5 @@ Production configuration uses the PostgreSQL driver with environment-provided co
 Profiles survive reload and backend restart. In-memory login sessions do not survive backend restart, so the user signs in again to recover saved profile data. The default local database is for development, not a production storage or backup strategy.
 
 Flyway V2 adds `profiles.discoverable`, default false, so existing saved accounts stay private. Visibility is owned by the same account UUID and survives profile edits. No demo record is inserted into these tables.
+
+Flyway V3 adds `profile_decisions` (actor/target composite key), `collaboration_matches` (unique canonical member pair, score at match, creation/closure timestamps), and `collaboration_messages` (database sequence, match, server-derived sender, client request UUID, bounded body, timestamp). Foreign keys bind these records to real accounts; demo never writes them. Closed matches retain history but the application denies access and future contact. Database-backed account deletion would cascade, but no user-facing deletion endpoint exists yet.

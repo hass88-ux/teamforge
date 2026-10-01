@@ -84,4 +84,13 @@ class DiscoveryTest {
   account("Visible",true); fail=true;
   http.perform(get("/api/discovery/recommendations").with(user(owner.email))).andExpect(status().isServiceUnavailable());
  }
+ @Test void refreshDoesNotReintroduceDecidedProfiles() throws Exception {
+  var visible=account("Visible",true);
+  sqlForDecision(owner.id,visible.id);
+  http.perform(get("/api/discovery/recommendations").with(user(owner.email))).andExpect(status().isOk()).andExpect(jsonPath("$.recommendations.length()").value(0));
+ }
+ @Autowired org.springframework.jdbc.core.JdbcTemplate sql;
+ private void sqlForDecision(UUID actor,UUID target) {
+  sql.update("INSERT INTO profile_decisions(actor_id,target_id,decision,created_at) VALUES(?,?,?,?)",actor,target,"PASS",java.sql.Timestamp.from(Instant.now()));
+ }
 }

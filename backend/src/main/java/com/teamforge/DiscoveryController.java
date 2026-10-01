@@ -20,9 +20,10 @@ class DiscoveryController {
  private final ProfileRepository profiles;
  private final ObjectMapper json;
  private final RestClient ai;
+ private final DecisionLookup decisions;
  private static final List<String> PUBLIC_FIELDS = List.of("displayName", "role", "skills", "interests", "rolesSought", "weeklyHours", "goal", "workingStyle", "entityType", "matchingIntent", "description", "neededSkills");
- DiscoveryController(AccountRepository accounts, ProfileRepository profiles, ObjectMapper json, @Value("${teamforge.ai-url:http://127.0.0.1:8001}") String url) {
-  this.accounts=accounts; this.profiles=profiles; this.json=json;
+ DiscoveryController(AccountRepository accounts, ProfileRepository profiles, ObjectMapper json, DecisionLookup decisions, @Value("${teamforge.ai-url:http://127.0.0.1:8001}") String url) {
+  this.accounts=accounts; this.profiles=profiles; this.json=json; this.decisions=decisions;
   var factory=new SimpleClientHttpRequestFactory();
   factory.setConnectTimeout(Duration.ofSeconds(3)); factory.setReadTimeout(Duration.ofSeconds(10));
   ai=RestClient.builder().baseUrl(url).requestFactory(factory).build();
@@ -34,12 +35,23 @@ class DiscoveryController {
    result.put("id",profile.accountId.toString()); result.put("accountType","REAL"); return result;
   } catch (com.fasterxml.jackson.core.JsonProcessingException ex) { throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR); }
  }
+ int compatibility(StoredProfile owner, StoredProfile candidate) {
+  try {
+   var response=ai.post().uri("/recommendations/real").body(Map.of("profile",signals(owner),"candidates",List.of(signals(candidate)))).retrieve().body(Map.class);
+   if (response == null || !"REAL".equals(response.get("accountType")) || !(response.get("recommendations") instanceof List<?> items)) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
+   if (items.isEmpty()) return 0;
+   if (items.size()!=1 || !(items.getFirst() instanceof Map<?,?> item) || !(item.get("candidate") instanceof Map<?,?> person) || !candidate.accountId.toString().equals(person.get("id")) || !(item.get("compatibility") instanceof Number number) || !Double.isFinite(number.doubleValue()) || number.doubleValue()>100 || number.doubleValue()<=50) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
+   return number.intValue();
+  } catch (RestClientException ex) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Compatibility temporarily unavailable"); }
+ }
  @GetMapping("/recommendations")
  Map<String,Object> recommendations(Authentication auth) {
   var owner=accounts.findByEmail(auth.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   var ownProfile=profiles.findById(owner.id).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,"Complete your profile first"));
   var page=profiles.findByDiscoverableTrueAndAccountIdNot(owner.id, PageRequest.of(0,200,Sort.by(Sort.Direction.DESC,"updatedAt").and(Sort.by("accountId"))));
-  var candidates=page.getContent().stream().map(this::signals).toList();
+  // Decisions are persistent; refresh does not reintroduce passed/liked profiles.
+  var decided=decisions.targets(owner.id);
+  var candidates=page.getContent().stream().filter(p -> !decided.contains(p.accountId)).map(this::signals).toList();
   if (candidates.isEmpty()) return Map.of("accountType","REAL","recommendations",List.of(),"searchedProfileCount",0,"poolLimited",false);
   Map<?,?> response;
   try { response=ai.post().uri("/recommendations/real").body(Map.of("profile",signals(ownProfile),"candidates",candidates)).retrieve().body(Map.class); }

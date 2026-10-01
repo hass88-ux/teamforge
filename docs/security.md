@@ -8,7 +8,7 @@ Session cookies are HttpOnly and SameSite=Lax; production configuration requires
 
 Signup/login have a basic per-instance remote-address limit of 30 attempts per five minutes and a bounded address map. This is not a distributed abuse-prevention system. No proxy headers are trusted for identifying clients; deployment behind a proxy needs an explicitly reviewed rate-limit strategy.
 
-Default backend binding is loopback. There is no public deployment yet. Real-user mutual matching, messaging authorization, project persistence, email verification, password recovery, account deletion, distributed sessions, and broader abuse controls are unfinished. These limitations must be resolved or clearly constrained before a public real-user beta. Current functionality is not a security certification.
+Default backend binding is loopback. There is no public deployment yet. project persistence, email verification, password recovery, account deletion, distributed sessions, and broader abuse controls are unfinished. These limitations must be resolved or clearly constrained before a public real-user beta. Current functionality is not a security certification.
 
 ## Verified
 
@@ -17,3 +17,11 @@ Seven auth/profile integration tests cover CSRF, registration/hashing, login rot
 ## Discovery boundary
 
 Authenticated discovery retrieves only explicitly visible profiles and excludes the session owner. A bounded real-only ranking request goes to the loopback/private recommendation service, with no credentials. The Java response reconstructs candidates from the eligible database snapshot and an allowlist of public fields, excluding email, hashes, timezone, and availability slots. Visibility is rechecked after inference. Visibility writes require authenticated ownership and CSRF, and do not accept another account ID. Four integration tests cover private defaults, visibility reversal/edit persistence, self/private exclusion and field minimization, honest empty results, and retryable upstream failures. Three Python tests verify real/demo isolation, intent and threshold rules, self exclusion, and bounded input pools.
+
+## Mutual consent and message authorization
+
+Flyway V3 stores real decisions, canonical unordered account pairs, and messages. Reciprocal likes serialize locks in canonical account-ID order so concurrent votes create one match. Likes re-score the pair using the real ranking endpoint before the transaction; locked profile versions must still match the scored snapshot. Invalid/stale/unavailable pairs fail without persisting choices. Discovery omits decided candidates after refresh.
+
+Each conversation read/send checks active membership using the session account, never a client-provided sender. Reads and writes lock the match against concurrent closure. Send requests are idempotent per match/sender/client UUID. Sender-account locks serialize a database-backed 30-new-messages/minute limit across that user's conversations. Unmatching closes access and blocks future contact for that pair. Hiding discovery does not terminate existing consent; users can explicitly unmatch. Closed records are retained, not deleted.
+
+Eight collaboration tests cover mutual consent and persistence, intent/visibility/self/score rules, outsider access and CSRF, replay-safe sending, closure, simultaneous likes, validation/rate limits, pagination, and profile changes during scoring. Discovery adds a regression for persistent decision exclusion. These checks do not replace production abuse controls, reporting, or PostgreSQL verification.
