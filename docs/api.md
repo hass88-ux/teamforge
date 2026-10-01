@@ -11,3 +11,7 @@ Collection and string bounds prevent unbounded profile payloads. Invalid input r
 ## Demo recommendations
 
 POST /api/demo/recommendations accepts the same profile draft and returns ranked fictional profiles, structured contributions, directional scores, reciprocal compatibility, evidence, and model version. Invalid profiles return 400; unreachable or failing AI service returns 503. Configure AI_SERVICE_URL on Java; the default is http://127.0.0.1:8001. No persisted interactions or real-user recommendations are created.
+
+## Team recommendation
+
+`POST /api/demo/teams` accepts `{ profile, project }`. Profile uses the onboarding contract. Project requires name (up to 80 characters), description (up to 1000), domain, stage, technologies (1–20), unique rolesNeeded (1–4), and weeklyHours (1–60). Invalid nested input returns 400; service failures return 503. Python returns feasible/members and, for a feasible team, teamScore, contributions, sharedHours, rolesCovered, and algorithm metadata. Recommendations neither persist projects nor create membership.

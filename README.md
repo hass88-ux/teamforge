@@ -2,7 +2,7 @@
 
 Find the people you should build with.
 
-TeamForge is being built as a collaborator matchmaking platform with structured, reciprocal recommendations. This repository is in the foundation stage. There is no public deployment or real-user traction yet.
+TeamForge is being built as a collaborator matchmaking platform with structured, reciprocal recommendations. This repository has a working local demo and is still in development. There is no public deployment or real-user traction yet.
 
 ## Current implementation
 
@@ -11,6 +11,7 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 - Python/FastAPI reciprocal weighted ranking with 264 diverse fictional profiles, grounded explanations, and disclosed tailored demo candidates.
 - Discovery cards, synthetic project details, and temporary like/pass controls.
 - Disclosed simulated mutual matches, scripted demo conversations, and coffee-chat proposals with simulated accept/decline controls.
+- Temporary project creation and constrained team recommendations with inspectable scoring.
 - Architecture, CI, and ten-day delivery plan.
 
 ## Local development
@@ -26,12 +27,12 @@ AI service: follow [ai/README.md](ai/README.md) and start it on port 8001 before
 
 ## Planned product
 
-Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Demo onboarding and baseline discovery are implemented. Real-user mutual matching and messaging, persistence, accounts, team optimization, trained models, and GitHub OAuth remain unimplemented. Demo matches and conversations are clearly labeled simulations.
+Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Demo onboarding and baseline discovery are implemented. Real-user mutual matching and messaging, persistence, accounts, trained models, and GitHub OAuth remain unimplemented. Demo team recommendations use a bounded beam-search heuristic; real-user team formation is not yet implemented. Demo matches and conversations are clearly labeled simulations.
 
-See [architecture](docs/architecture.md) and [delivery plan](docs/delivery-plan.md).
+See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [recommendation baseline](docs/recommendation-system.md), [team formation](docs/team-formation.md), and [delivery plan](docs/delivery-plan.md).
 
 ## Verification
 
-Foundation verified locally: backend Maven verify (including health integration test), frontend lint, and frontend production build. CI repeats these checks. The landing page is an early product preview, not the completed demo.
+Current local checks pass: 8 Java tests, 11 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
-- Validated demo onboarding draft API connected to the frontend; drafts are temporary and not persisted.
+No public deployment, real-user metrics, learned-model evaluation, or production security certification is claimed. Demo state is temporary and fictional profiles and automated replies are disclosed throughout.

@@ -3,6 +3,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, field_validator
 from .demo import recommendations
+from .demo import PROFILES
+from .teams import recommend_team
 
 app = FastAPI(title='TeamForge recommendations', docs_url=None, redoc_url=None)
 Text = Annotated[str, Field(min_length=1, max_length=80)]
@@ -32,3 +34,26 @@ def health(): return {'status': 'ok', 'modelVersion': 'weighted-reciprocal-v1'}
 @app.post('/recommendations/demo')
 def demo(profile: Profile):
     return {'accountType': 'DEMO', 'syntheticProfileCount': 264, 'recommendations': recommendations(profile.model_dump())}
+
+class Project(BaseModel):
+    name: Text
+    description: Annotated[str, Field(min_length=1, max_length=1000)]
+    domain: Text
+    stage: Text
+    technologies: Annotated[list[Text], Field(min_length=1, max_length=20)]
+    rolesNeeded: Annotated[list[Text], Field(min_length=1, max_length=4)]
+    weeklyHours: Annotated[int, Field(ge=1, le=60)]
+
+    @field_validator('rolesNeeded')
+    @classmethod
+    def unique_roles(cls, value):
+        if len(value) != len(set(value)): raise ValueError('Roles must be unique')
+        return value
+
+class TeamRequest(BaseModel):
+    profile: Profile
+    project: Project
+
+@app.post('/teams/demo')
+def demo_team(request: TeamRequest):
+    return recommend_team(request.profile.model_dump(), request.project.model_dump(), PROFILES)

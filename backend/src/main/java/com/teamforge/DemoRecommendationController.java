@@ -1,6 +1,8 @@
 package com.teamforge;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+import java.util.List;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,5 +28,21 @@ class DemoRecommendationController {
   new OnboardingController().validate(profile);
   try { return ai.post().uri("/recommendations/demo").body(profile).retrieve().body(Map.class); }
   catch (RestClientException ex) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Recommendations temporarily unavailable"); }
+ }
+ record ProjectDraft(@NotBlank @Size(max=80) String name,
+  @NotBlank @Size(max=1000) String description, @NotBlank @Size(max=80) String domain,
+  @NotBlank @Size(max=80) String stage,
+  @NotEmpty @Size(max=20) List<@NotBlank @Size(max=80) String> technologies,
+  @NotEmpty @Size(max=4) List<@NotBlank @Size(max=80) String> rolesNeeded,
+  @Min(1) @Max(60) int weeklyHours) {}
+ record TeamRequest(@NotNull @Valid OnboardingController.ProfileDraft profile, @NotNull @Valid ProjectDraft project) {}
+ @PostMapping("/teams")
+ Map<?, ?> teams(@Valid @RequestBody TeamRequest request) {
+  new OnboardingController().validate(request.profile());
+  if (request.project().rolesNeeded().stream().distinct().count() != request.project().rolesNeeded().size()) {
+   throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Roles must be unique");
+  }
+  try { return ai.post().uri("/teams/demo").body(request).retrieve().body(Map.class); }
+  catch (RestClientException ex) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Team recommendations temporarily unavailable"); }
  }
 }

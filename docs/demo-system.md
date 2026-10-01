@@ -27,3 +27,7 @@ Only existing demo matches open the conversation UI. Messages are trimmed and li
 All choices, messages, and proposals live in React memory; returning from a conversation to discovery preserves them. Leaving discovery for the profile, exiting, resetting the demo batch, or reloading clears them. This is not a production messaging authorization boundary: real messaging requires server-side identities, persisted mutual consent, and authorization before release.
 
 Six frontend tests cover simulated reciprocity, duplicate decisions, unmatched-message rejection, message constraints, proposal timing and finalization, and reset. A local browser walkthrough verified match → message/scripted reply → future proposal → simulated acceptance. Frontend test, lint, and production build pass.
+
+## Demo projects and teams
+
+Completed profiles can open Create a project & team. Temporary project drafts request a constrained fictional team through Java and Python. The owner is included, one distinct demo candidate fills each requested role, and all people must meet the project commitment. Shared availability and project skill/domain coverage contribute to an inspectable heuristic score. No real invitations or membership are created. See team-formation.md for the bounded beam search and limitations.

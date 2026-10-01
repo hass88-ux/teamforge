@@ -10,6 +10,27 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
 
 class DemoRecommendationControllerTest {
+ @Test void forwardsTeamConstraintsAndRejectsDuplicateRoles() throws Exception {
+  var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+  var requestBody = new AtomicReference<String>();
+  server.createContext("/teams/demo", exchange -> {
+   requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+   var bytes = "{\"feasible\":true,\"members\":[],\"synthetic\":true}".getBytes(StandardCharsets.UTF_8);
+   exchange.getResponseHeaders().set("Content-Type", "application/json");
+   exchange.sendResponseHeaders(200, bytes.length);
+   exchange.getResponseBody().write(bytes); exchange.close();
+  });
+  server.start();
+  try {
+   var controller = new DemoRecommendationController("http://127.0.0.1:" + server.getAddress().getPort());
+   var project = new DemoRecommendationController.ProjectDraft("Example", "Build something", "Education", "Idea", List.of("React"), List.of("Frontend engineer"), 8);
+   var result = controller.teams(new DemoRecommendationController.TeamRequest(profile(), project));
+   assertThat(result.get("feasible")).isEqualTo(true);
+   assertThat(requestBody.get()).contains("rolesNeeded", "weeklyHours", "profile", "project");
+   var duplicate = new DemoRecommendationController.ProjectDraft("Example", "Build something", "Education", "Idea", List.of("React"), List.of("Frontend engineer", "Frontend engineer"), 8);
+   assertThatThrownBy(() -> controller.teams(new DemoRecommendationController.TeamRequest(profile(), duplicate))).isInstanceOfSatisfying(ResponseStatusException.class, ex -> assertThat(ex.getStatusCode().value()).isEqualTo(400));
+  } finally { server.stop(0); }
+ }
  private OnboardingController.ProfileDraft profile() {
   return new OnboardingController.ProfileDraft("Demo", "Backend engineer", List.of("Java"), List.of("Education"), List.of("Frontend engineer"), 8, "Portfolio project", "Structured", "UTC", List.of(20));
  }
