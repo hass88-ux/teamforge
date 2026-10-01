@@ -31,3 +31,5 @@ Six frontend tests cover simulated reciprocity, duplicate decisions, unmatched-m
 ## Demo projects and teams
 
 Completed profiles can open Create a project & team. Temporary project drafts request a constrained fictional team through Java and Python. The owner is included, one distinct demo candidate fills each requested role, and all people must meet the project commitment. Shared availability and project skill/domain coverage contribute to an inspectable heuristic score. No real invitations or membership are created. See team-formation.md for the bounded beam search and limitations.
+
+The interface uses concise demo labels rather than repeated fictional/synthetic labels on profile cards, descriptions, and projects. Simulated replies and demo actions remain identified; the data is still synthetic and isolated from real accounts.

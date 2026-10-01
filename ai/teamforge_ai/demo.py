@@ -37,7 +37,7 @@ def generate_profiles(count=600, seed=41):
             'displayName': f'{FIRST[index % len(FIRST)]} {LAST[index // len(FIRST) % len(LAST)]}' if index % 5 else f'{interests[0]} Collective {index + 1}',
             'entityType': 'ORGANIZATION' if index % 5 == 0 else 'INDIVIDUAL',
             'matchingIntent': ['PROVIDER', 'SEEKER', 'COLLABORATOR'][index // len(ARCHETYPES) % 3],
-            'description': f'A fictional {role.lower()} offering {", ".join(base_skills)} for {interests[0].lower()} projects.',
+            'description': f'{role} offering {", ".join(base_skills)} for {interests[0].lower()} projects.',
             'neededSkills': rng.sample(ARCHETYPES[(index + 1) % len(ARCHETYPES)][1], 1),
             'role': role, 'headline': f'{role} exploring {interests[0].lower()} projects',
             'skills': base_skills + rng.sample(['AWS', 'Docker', 'Product', 'TypeScript'], rng.randint(0, 2)),
@@ -45,7 +45,7 @@ def generate_profiles(count=600, seed=41):
             'goal': rng.choice(GOALS), 'workingStyle': rng.choice(STYLES), 'timezone': rng.choice(ZONES),
             'availability': [day * 24 + hour for day in selected_days for hour in selected_hours],
             'experienceLevel': rng.choice(['Learning', 'Intermediate', 'Experienced']),
-            'projects': [{'name': f'{interests[0]} Studio', 'description': f'A fictional {interests[0].lower()} prototype for the demo.', 'technologies': base_skills, 'synthetic': True}],
+            'projects': [{'name': f'{interests[0]} Studio', 'description': f'Exploring a {interests[0].lower()} prototype.', 'technologies': base_skills, 'synthetic': True}],
         })
     return result
 
@@ -62,12 +62,12 @@ def recommendations(profile):
         complement = [skill for skill in archetype[1] if skill not in profile['skills']]
         if not complement: complement = ['Complementary project planning']
         candidates.append({**profile, 'id': 'demo-tailored', 'accountType': 'DEMO', 'displayName': 'Jamie Demo', 'role': role,
-            'headline': 'A fictional collaborator tailored to your demo preferences', 'skills': complement,
+            'headline': 'A collaborator exploring your project interests', 'skills': complement,
             'rolesSought': [profile['role']], 'tailoredForDemo': True,
             'entityType': 'INDIVIDUAL',
             'matchingIntent': 'SEEKER' if profile.get('matchingIntent') == 'PROVIDER' else 'PROVIDER' if profile.get('matchingIntent') == 'SEEKER' else 'COLLABORATOR',
             'neededSkills': profile['skills'],
             'skills': list(dict.fromkeys(profile.get('neededSkills', []) + complement)),
-            'description': 'A fictional profile tailored to demonstrate compatible offers and needs.',
-            'projects': [{'name': f"{profile['interests'][0]} Together", 'description': 'A synthetic project example generated for this demo.', 'technologies': complement, 'synthetic': True}]})
+            'description': 'Interested in combining our skills to build something together.',
+            'projects': [{'name': f"{profile['interests'][0]} Together", 'description': 'A project exploring shared interests and complementary skills.', 'technologies': complement, 'synthetic': True}]})
     return [item for item in rank(profile, candidates) if item['compatibility'] > 50][:20]
