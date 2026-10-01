@@ -10,6 +10,7 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 - Java 21 Spring Boot API with health probes and a startup/health integration test.
 - Python/FastAPI reciprocal weighted ranking with 264 diverse fictional profiles, grounded explanations, and disclosed tailored demo candidates.
 - Discovery cards, synthetic project details, and temporary like/pass controls.
+- Disclosed simulated mutual matches, scripted demo conversations, and coffee-chat proposals with simulated accept/decline controls.
 - Architecture, CI, and ten-day delivery plan.
 
 ## Local development
@@ -20,12 +21,12 @@ Backend: install Java 21 and Maven, then run `mvn -f backend/pom.xml spring-boot
 Health: `http://localhost:8080/actuator/health`.
 Backend checks: `mvn -f backend/pom.xml verify`.
 Frontend: run `npm ci` and `npm run dev` inside `frontend`.
-Frontend checks: run `npm run lint` and `npm run build` inside `frontend`.
+Frontend checks: run `npm test`, `npm run lint`, and `npm run build` inside `frontend`.
 AI service: follow [ai/README.md](ai/README.md) and start it on port 8001 before discovery. Start Java and Vite alongside it. The frontend development proxy forwards /api to Java on port 8080. Production needs same-origin API routing.
 
 ## Planned product
 
-Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Demo onboarding and baseline discovery are implemented. Mutual matches, messaging, persistence, real accounts, team optimization, trained models, and GitHub OAuth remain unimplemented.
+Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Demo onboarding and baseline discovery are implemented. Real-user mutual matching and messaging, persistence, accounts, team optimization, trained models, and GitHub OAuth remain unimplemented. Demo matches and conversations are clearly labeled simulations.
 
 See [architecture](docs/architecture.md) and [delivery plan](docs/delivery-plan.md).
 

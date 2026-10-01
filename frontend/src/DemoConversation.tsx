@@ -1,0 +1,30 @@
+import { useState } from 'react'
+import './DemoConversation.css'
+import type { Dispatch, FormEvent } from 'react'
+import type { DemoAction, DemoMatch } from './demoState'
+
+export default function DemoConversation({ match, dispatch, onBack }: { match: DemoMatch; dispatch: Dispatch<DemoAction>; onBack: () => void }) {
+  const [text, setText] = useState('')
+  const [kind, setKind] = useState<'Virtual coffee' | 'Intro call' | 'Project discussion'>('Virtual coffee')
+  const [date, setDate] = useState('')
+  const [clockTime, setClockTime] = useState('18:00')
+  const [note, setNote] = useState('')
+  const [error, setError] = useState('')
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  function send(event: FormEvent) {
+    event.preventDefault()
+    if (!text.trim()) return
+    dispatch({ type: 'message', candidateId: match.candidate.id, text, id: crypto.randomUUID(), sentAt: new Date().toISOString() }); setText('')
+  }
+  function propose(event: FormEvent) {
+    event.preventDefault()
+    const startsAt = new Date(`${date}T${clockTime}`)
+    const [year, month, day] = date.split('-').map(Number)
+    const [hour, minute] = clockTime.split(':').map(Number)
+    if (startsAt.getFullYear() !== year || startsAt.getMonth() + 1 !== month || startsAt.getDate() !== day || startsAt.getHours() !== hour || startsAt.getMinutes() !== minute) { setError('Enter a valid local date and time.'); return }
+    if (!Number.isFinite(startsAt.getTime()) || startsAt.getTime() <= Date.now()) { setError('Choose a future date and time.'); return }
+    dispatch({ type: 'propose', candidateId: match.candidate.id, now: new Date().toISOString(), proposal: { id: crypto.randomUUID(), kind, startsAt: startsAt.toISOString(), timezone, note: note.trim(), status: 'proposed' } })
+    setError(''); setDate(''); setNote('')
+  }
+  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">SIMULATED CONVERSATION · NO REAL RECIPIENT</span><button className="text-button" onClick={onBack}>Back to discovery</button></div><h1>Say hello to <em>{match.candidate.displayName}.</em></h1><p className="demo-disclosure">This is a fictional demo match. Messages and replies stay in this page. Replies are scripted simulations, and no invitation or calendar event is sent.</p><div className="conversation-layout"><section><h2>Start a conversation</h2><div className="message-list" role="log" aria-label="Demo messages" aria-live="polite">{match.messages.length === 0 && <p className="note">Introduce yourself and share one idea you would enjoy building.</p>}{match.messages.map(message => <article className={`message ${message.sender}`} key={message.id}><strong>{message.sender === 'you' ? 'You · demo message' : 'DEMO / SIMULATED REPLY'}</strong><p>{message.text}</p><time dateTime={message.sentAt}>{new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time></article>)}</div><form onSubmit={send}><label className="input-label" htmlFor="demo-message">Your message</label><textarea id="demo-message" maxLength={1000} value={text} onChange={event => setText(event.target.value)} placeholder="I’m interested in your project. Could we explore an idea together?"/><div className="onboarding-controls"><span className="note">{text.length} / 1000</span><button disabled={!text.trim()}>Send demo message</button></div></form></section><section className="coffee-panel"><h2>Suggest a coffee chat</h2><form onSubmit={propose}><label className="input-label" htmlFor="coffee-kind">Conversation type</label><select id="coffee-kind" value={kind} onChange={event => setKind(event.target.value as typeof kind)}><option>Virtual coffee</option><option>Intro call</option><option>Project discussion</option></select><label className="input-label" htmlFor="coffee-date">Date (YYYY-MM-DD)</label><input id="coffee-date" type="text" inputMode="numeric" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" maxLength={10} placeholder="2026-10-02" value={date} required onChange={event => { setDate(event.target.value); setError('') }}/><label className="input-label" htmlFor="coffee-time">Time ({timezone})</label><select id="coffee-time" value={clockTime} onChange={event => setClockTime(event.target.value)}>{Array.from({ length: 48 }, (_, index) => { const value = `${String(Math.floor(index / 2)).padStart(2, '0')}:${index % 2 === 0 ? '00' : '30'}`; return <option key={value}>{value}</option> })}</select><label className="input-label" htmlFor="coffee-note">Optional invitation note</label><textarea id="coffee-note" maxLength={500} value={note} onChange={event => setNote(event.target.value)}/>{error && <p className="error" role="alert">{error}</p>}<button disabled={!date}>Create demo proposal</button></form><div aria-live="polite">{match.proposals.map(proposal => <article className="proposal" key={proposal.id}><h3>{proposal.kind}</h3><p><time dateTime={proposal.startsAt}>{new Date(proposal.startsAt).toLocaleString()}</time> · {proposal.timezone}</p>{proposal.note && <p>{proposal.note}</p>}<span className="demo-label">{proposal.status === 'proposed' ? 'DEMO PROPOSAL · AWAITING SIMULATION' : `SIMULATED ${proposal.status.toUpperCase()}`}</span>{proposal.status === 'proposed' && <div className="actions"><button onClick={() => dispatch({ type: 'respond', candidateId: match.candidate.id, proposalId: proposal.id, status: 'accepted' })}>Simulate acceptance</button><button className="secondary" onClick={() => dispatch({ type: 'respond', candidateId: match.candidate.id, proposalId: proposal.id, status: 'declined' })}>Simulate decline</button></div>}</article>)}</div></section></div><section className="liked-list"><h2>Their fictional projects</h2><div className="summary-grid">{match.candidate.projects.map(project => <article key={project.name}><span className="demo-label">SYNTHETIC PROJECT</span><h3>{project.name}</h3><p>{project.description}</p><p>{project.technologies.join(' · ')}</p></article>)}</div></section></section>
+}

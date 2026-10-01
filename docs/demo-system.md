@@ -4,7 +4,7 @@ The landing page's Try demo button opens six focused steps: identity/role, skill
 
 Answers exist only in React memory. Exit and reload clear them; no shared demo account or real-user record is created. Finish submits to the Spring onboarding validation API through Vite's development proxy. A failed request preserves answers and allows retry. The completion view explicitly says DEMO PROFILE / NOT SAVED.
 
-Controls support keyboard activation, selected-state announcements, labeled inputs, progress, and focus on each new step. The weekly selector currently exposes six common hours each day. Arbitrary hour selection and full recommendation discovery are future work.
+Controls support keyboard activation, selected-state announcements, labeled inputs, progress, and focus on each new step. The weekly selector currently exposes six common hours each day. Arbitrary hour selection is future work; baseline recommendation discovery is implemented.
 
 ## Verification
 
@@ -17,3 +17,13 @@ Vite's proxy is development-only. Public hosting must route `/api` to the Java b
 ## Discovery milestone
 
 Completed profiles can now open ranked recommendations, view contribution breakdowns and fictional projects, and like/pass candidates. Demo actions are isolated in React memory. See recommendation-system.md for synthetic-candidate disclosure and scoring limitations.
+
+## Simulated collaboration milestone
+
+A visitor's like produces a simulated match only when the fictional candidate's reverse weighted score is at least 70. This is a disclosed demo rule, not a human decision or learned acceptance probability. Passes and lower reverse scores do not produce simulated matches; repeated decisions cannot duplicate matches.
+
+Only existing demo matches open the conversation UI. Messages are trimmed and limited to 1000 characters. A scripted reply is explicitly labeled DEMO / SIMULATED REPLY. Coffee-chat proposals support virtual coffee, intro call, or project discussion; dates must be future valid local times. Scheduling uses the browser's visibly identified timezone, stores a UTC instant and timezone, and rejects nonexistent local wall times. Users explicitly click simulate acceptance or decline. No real recipient, email, invitation, meeting link, or calendar integration exists.
+
+All choices, messages, and proposals live in React memory; returning from a conversation to discovery preserves them. Leaving discovery for the profile, exiting, resetting the demo batch, or reloading clears them. This is not a production messaging authorization boundary: real messaging requires server-side identities, persisted mutual consent, and authorization before release.
+
+Six frontend tests cover simulated reciprocity, duplicate decisions, unmatched-message rejection, message constraints, proposal timing and finalization, and reset. A local browser walkthrough verified match → message/scripted reply → future proposal → simulated acceptance. Frontend test, lint, and production build pass.
