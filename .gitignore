@@ -2,6 +2,7 @@ node_modules/
 dist/
 target/
 .venv/
+.local/
 __pycache__/
 .pytest_cache/
 .env

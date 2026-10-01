@@ -7,7 +7,8 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 ## Current implementation
 
 - React + TypeScript landing page and six-step interactive demo onboarding (Vite).
-- Java 21 Spring Boot API with health probes and a startup/health integration test.
+- Java 21 Spring Boot API, Spring Security session authentication, CSRF protection, and health probes.
+- Persistent owner-scoped profiles, BCrypt password hashing, and Flyway-managed accounts/profile tables.
 - Python/FastAPI reciprocal weighted ranking with 264 diverse fictional profiles, grounded explanations, and disclosed tailored demo candidates.
 - Discovery cards, synthetic project details, and temporary like/pass controls.
 - Disclosed simulated mutual matches, scripted demo conversations, and coffee-chat proposals with simulated accept/decline controls.
@@ -27,12 +28,18 @@ AI service: follow [ai/README.md](ai/README.md) and start it on port 8001 before
 
 ## Planned product
 
-Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and optional public-only GitHub enrichment are planned. Demo onboarding and baseline discovery are implemented. Real-user mutual matching and messaging, persistence, accounts, trained models, and GitHub OAuth remain unimplemented. Demo team recommendations use a bounded beam-search heuristic; real-user team formation is not yet implemented. Demo matches and conversations are clearly labeled simulations.
+Interactive onboarding, isolated demo sessions, 250+ clearly fictional profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and owner-scoped profile storage work locally; optional public-only GitHub enrichment is planned. Demo onboarding and baseline discovery are implemented. Real-user discovery, mutual matching and messaging, persisted projects/interactions, trained models, and GitHub OAuth remain unimplemented. Accounts and owner-scoped profiles now persist locally. Demo team recommendations use a bounded beam-search heuristic; real-user team formation is not yet implemented. Demo matches and conversations are clearly labeled simulations.
 
 See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [recommendation baseline](docs/recommendation-system.md), [team formation](docs/team-formation.md), and [delivery plan](docs/delivery-plan.md).
 
 ## Verification
 
-Current local checks pass: 8 Java tests, 11 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current local checks pass: 15 Java tests, 11 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
-No public deployment, real-user metrics, learned-model evaluation, or production security certification is claimed. Demo state is temporary and fictional profiles and automated replies are disclosed throughout.
+No public deployment, real-user metrics, learned-model evaluation, or production security certification is claimed. Demo state is temporary and fictional profiles and automated replies are disclosed throughout. See [security](docs/security.md), [privacy](docs/privacy.md), and [persistence](docs/data-model.md) for current guarantees and unfinished work.
+
+## Local accounts
+
+Signup and login use the Java backend and a local file-backed H2 database. Credentials and profile records are not committed. Sessions are held in server memory; a backend restart logs you out, while accounts/profiles remain on disk. Demo remains separate and temporary.
+
+For future PostgreSQL deployment, activate Spring profile `production` and set `DATABASE_URL` to a JDBC PostgreSQL URL, `DATABASE_USER`, and `DATABASE_PASSWORD`. HTTPS is required because production cookies are Secure. PostgreSQL integration and public deployment have not been verified yet. Never commit these environment values.

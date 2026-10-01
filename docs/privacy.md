@@ -1,0 +1,7 @@
+# Privacy decisions
+
+Real accounts collect email and a password hash for authentication, plus the user-selected collaboration profile. Never expose email or hashes through recommendation candidates. At this milestone, stored profiles are accessible only to their owner. Passwords are not persisted in plaintext, and API validation does not echo them.
+
+The optional GitHub connection is not implemented yet. No private GitHub repository data or OAuth tokens are collected. Demo profiles, projects, matches, and scripted replies are visibly fictional. Demo profile drafts and collaboration state are temporary and isolated from persistent accounts.
+
+Email verification, deletion/export controls, retention policies, a public privacy notice, and account recovery are not yet implemented. The current local application is not a launched public account service. Fictional QA accounts used for local verification do not count as people or traction.
