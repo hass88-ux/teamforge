@@ -32,3 +32,10 @@ class TeamTests(unittest.TestCase):
         bad = [{**p, 'id': p['id'] + '-bad', 'interests': ['Gaming'], 'availability': [8], 'goal': 'Startup'} for p in good]
         result = recommend_team(builder(), self.project(), bad + good, REFERENCE)
         self.assertEqual({p['id'] for p in result['members']}, {'front', 'design'})
+
+    def test_intent_constraints_apply_to_owner_and_member_pairs(self):
+        candidates = [{**p, 'matchingIntent': 'PROVIDER'} for p in self.candidates()]
+        self.assertFalse(recommend_team({**builder(), 'matchingIntent': 'PROVIDER'}, self.project(), candidates, REFERENCE)['feasible'])
+        self.assertFalse(recommend_team({**builder(), 'matchingIntent': 'COLLABORATOR'}, self.project(), candidates, REFERENCE)['feasible'])
+        candidates[1]['matchingIntent'] = 'SEEKER'
+        self.assertTrue(recommend_team({**builder(), 'matchingIntent': 'COLLABORATOR'}, self.project(), candidates, REFERENCE)['feasible'])

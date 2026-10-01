@@ -20,6 +20,13 @@ class OnboardingControllerTest {
   assertThat(result.getStatusCode().value()).isEqualTo(200);
   assertThat(result.getBody()).contains("\"accountType\":\"DEMO\"", "\"persisted\":false");
  }
+ @Test void retainsIntentDescriptionAndOrganization() {
+  String body=valid().strip().replace("\"availability\":[20,44]", "\"availability\":[20,44],\"entityType\":\"ORGANIZATION\",\"matchingIntent\":\"SEEKER\",\"description\":\"Need Java\",\"neededSkills\":[\"Java\"]");
+  var result=submit(body);
+  assertThat(result.getStatusCode().value()).isEqualTo(200);
+  assertThat(result.getBody()).contains("ORGANIZATION", "SEEKER", "Need Java");
+  assertThat(submit(body.replace("SEEKER","INVALID")).getStatusCode().value()).isEqualTo(400);
+ }
  @Test void rejectsMissingSignals() { assertThat(submit("{}").getStatusCode().value()).isEqualTo(400); }
  @Test void rejectsInvalidTimezone() { assertThat(submit(valid().replace("America/New_York","Invalid/Zone")).getStatusCode().value()).isEqualTo(400); }
  @Test void rejectsOutOfRangeAvailability() { assertThat(submit(valid().replace("[20,44]","[168]")).getStatusCode().value()).isEqualTo(400); }

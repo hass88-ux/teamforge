@@ -15,7 +15,7 @@ export type DemoAction =
 
 // Demo consent is a disclosed simulation rule, never a real person's decision.
 export function demoReciprocates(recommendation: Recommendation): boolean {
-  return recommendation.candidate.accountType === 'DEMO' && recommendation.reverseScore >= 70
+  return recommendation.candidate.accountType === 'DEMO' && recommendation.compatibility > 50
 }
 
 export function demoReducer(state: DemoState, action: DemoAction): DemoState {

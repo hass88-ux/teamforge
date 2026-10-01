@@ -9,7 +9,7 @@ TeamForge is being built as a collaborator matchmaking platform with structured,
 - React + TypeScript landing page and six-step interactive demo onboarding (Vite).
 - Java 21 Spring Boot API, Spring Security session authentication, CSRF protection, and health probes.
 - Persistent owner-scoped profiles, BCrypt password hashing, and Flyway-managed accounts/profile tables.
-- Python/FastAPI reciprocal weighted ranking with 264 diverse fictional profiles, grounded explanations, and disclosed tailored demo candidates.
+- Python/FastAPI reciprocal weighted ranking with 600 diverse fictional profiles, grounded explanations, and disclosed tailored demo candidates.
 - Discovery cards, synthetic project details, and temporary like/pass controls.
 - Disclosed simulated mutual matches, scripted demo conversations, and coffee-chat proposals with simulated accept/decline controls.
 - Temporary project creation and constrained team recommendations with inspectable scoring.
@@ -34,7 +34,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-Current local checks pass: 15 Java tests, 11 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current local checks pass: 16 Java tests, 15 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 No public deployment, real-user metrics, learned-model evaluation, or production security certification is claimed. Demo state is temporary and fictional profiles and automated replies are disclosed throughout. See [security](docs/security.md), [privacy](docs/privacy.md), and [persistence](docs/data-model.md) for current guarantees and unfinished work.
 
@@ -43,3 +43,9 @@ No public deployment, real-user metrics, learned-model evaluation, or production
 Signup and login use the Java backend and a local file-backed H2 database. Credentials and profile records are not committed. Sessions are held in server memory; a backend restart logs you out, while accounts/profiles remain on disk. Demo remains separate and temporary.
 
 For future PostgreSQL deployment, activate Spring profile `production` and set `DATABASE_URL` to a JDBC PostgreSQL URL, `DATABASE_USER`, and `DATABASE_PASSWORD`. HTTPS is required because production cookies are Secure. PostgreSQL integration and public deployment have not been verified yet. Never commit these environment values.
+
+### Intent-aware swipe discovery
+
+The demo contains 600 deterministic fictional profiles, including individuals and organizations. Onboarding collects provider, seeker, or collaborator intent; editable descriptions; offered skills; and needed skills (including Node.js). Providers exclude providers, seekers exclude seekers, and collaborators can match any intent. Discovery shows mutual compatibility above 50% before a like, profile type, intent, and “No GitHub connected” for these unlinked profiles. Swipe left/right, use arrow keys on the card, or use Pass/Like buttons. A like simulates a match and opens the existing in-app demo messaging flow; fictional replies are labeled. Real-user discovery and messaging remain pending.
+
+Descriptions are editable profile text. Structured offered/needed skill selections drive the heuristic; free text is not yet interpreted by a language model. Existing saved profiles receive safe defaults for the new fields.

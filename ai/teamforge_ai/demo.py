@@ -19,11 +19,11 @@ DOMAINS = ['AI', 'Education', 'Healthcare', 'Climate', 'Fintech', 'Developer too
 GOALS = ['Hackathon', 'Portfolio project', 'Open source', 'Research collaboration', 'Startup', 'Weekend project']
 STYLES = ['Structured', 'Flexible', 'Fast-moving', 'Research-heavy', 'Design-first', 'Engineering-first', 'Product-first']
 ZONES = ['America/New_York', 'America/Los_Angeles', 'Europe/London', 'Asia/Kolkata', 'Asia/Tokyo', 'UTC']
-FIRST = ['Alex', 'Jordan', 'Sam', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Avery', 'Quinn', 'Jamie', 'Drew', 'Sky']
+FIRST = ['Alex', 'Jordan', 'Sam', 'Taylor', 'Morgan', 'Casey', 'Riley', 'Avery', 'Quinn', 'Jamie', 'Drew', 'Sky', 'Robin', 'Devon', 'Sasha', 'Emery', 'Noah', 'Maya', 'Aria', 'Leo', 'Nora', 'Luca', 'Zara', 'Owen', 'Isla', 'Amir', 'Elena', 'Evan']
 LAST = ['Kim', 'Rivera', 'Patel', 'Chen', 'Reed', 'Morgan', 'Park', 'Singh', 'Ellis', 'Ali', 'Lee', 'Nguyen', 'Cruz', 'Shah', 'Brooks', 'Lane', 'Stone', 'Wong', 'Ford', 'Bell', 'Diaz', 'Green']
 
 
-def generate_profiles(count=264, seed=41):
+def generate_profiles(count=600, seed=41):
     rng = random.Random(seed)
     result = []
     for index in range(count):
@@ -34,7 +34,11 @@ def generate_profiles(count=264, seed=41):
         selected_hours = rng.choice([[8, 9, 12], [18, 19, 20], [20, 21, 22], [10, 11, 12, 13]])
         result.append({
             'id': f'demo-{index:03d}', 'accountType': 'DEMO',
-            'displayName': f'{FIRST[index % len(FIRST)]} {LAST[index // len(FIRST) % len(LAST)]}',
+            'displayName': f'{FIRST[index % len(FIRST)]} {LAST[index // len(FIRST) % len(LAST)]}' if index % 5 else f'{interests[0]} Collective {index + 1}',
+            'entityType': 'ORGANIZATION' if index % 5 == 0 else 'INDIVIDUAL',
+            'matchingIntent': ['PROVIDER', 'SEEKER', 'COLLABORATOR'][index // len(ARCHETYPES) % 3],
+            'description': f'A fictional {role.lower()} offering {", ".join(base_skills)} for {interests[0].lower()} projects.',
+            'neededSkills': rng.sample(ARCHETYPES[(index + 1) % len(ARCHETYPES)][1], 1),
             'role': role, 'headline': f'{role} exploring {interests[0].lower()} projects',
             'skills': base_skills + rng.sample(['AWS', 'Docker', 'Product', 'TypeScript'], rng.randint(0, 2)),
             'interests': interests, 'rolesSought': sought, 'weeklyHours': hours,
@@ -60,5 +64,10 @@ def recommendations(profile):
         candidates.append({**profile, 'id': 'demo-tailored', 'accountType': 'DEMO', 'displayName': 'Jamie Demo', 'role': role,
             'headline': 'A fictional collaborator tailored to your demo preferences', 'skills': complement,
             'rolesSought': [profile['role']], 'tailoredForDemo': True,
+            'entityType': 'INDIVIDUAL',
+            'matchingIntent': 'SEEKER' if profile.get('matchingIntent') == 'PROVIDER' else 'PROVIDER' if profile.get('matchingIntent') == 'SEEKER' else 'COLLABORATOR',
+            'neededSkills': profile['skills'],
+            'skills': list(dict.fromkeys(profile.get('neededSkills', []) + complement)),
+            'description': 'A fictional profile tailored to demonstrate compatible offers and needs.',
             'projects': [{'name': f"{profile['interests'][0]} Together", 'description': 'A synthetic project example generated for this demo.', 'technologies': complement, 'synthetic': True}]})
-    return rank(profile, candidates)[:20]
+    return [item for item in rank(profile, candidates) if item['compatibility'] > 50][:20]

@@ -2,7 +2,23 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 WEIGHTS = {'roles': 25, 'skills': 20, 'interests': 20, 'availability': 15, 'commitment': 10, 'goal': 5, 'style': 5}
-MODEL_VERSION = 'weighted-reciprocal-v1'
+MODEL_VERSION = 'weighted-reciprocal-v2'
+
+
+def intent_compatible(a, b):
+    left, right = a.get('matchingIntent', 'COLLABORATOR'), b.get('matchingIntent', 'COLLABORATOR')
+    return not (left == right and left in ('PROVIDER', 'SEEKER'))
+
+
+def skill_fit(a, b):
+    # Demand is directional: what I need from their offer, or what they need from mine.
+    demand = a.get('neededSkills', [])
+    reverse_demand = b.get('neededSkills', [])
+    fits = []
+    if demand: fits.append(fraction(demand, b['skills']))
+    if reverse_demand: fits.append(fraction(reverse_demand, a['skills']))
+    if fits: return sum(fits) / len(fits)
+    return len(set(b['skills']) - set(a['skills'])) / max(1, len(set(b['skills'])))
 
 
 def fraction(a, b):
@@ -28,7 +44,7 @@ def directional(a, b, reference):
     overlap = len(a_slots & b_slots)
     features = {
         'roles': float(b['role'] in a['rolesSought']),
-        'skills': len(set(b['skills']) - set(a['skills'])) / max(1, len(set(b['skills']))),
+        'skills': skill_fit(a, b),
         'interests': fraction(a['interests'], b['interests']),
         'availability': overlap / max(1, min(len(a_slots), len(b_slots))),
         'commitment': min(a['weeklyHours'], b['weeklyHours']) / max(a['weeklyHours'], b['weeklyHours']),
@@ -45,9 +61,12 @@ def score(a, b, reference=None):
     reverse, reverse_contributions, _ = directional(b, a, reference)
     # Harmonic mean penalizes one-sided compatibility; these are scores, not calibrated probabilities.
     reciprocal = 2 * forward * reverse / (forward + reverse) if forward + reverse else 0
+    if not intent_compatible(a, b): reciprocal = 0
     shared = sorted(set(a['interests']) & set(b['interests']))
     new_skills = sorted(set(b['skills']) - set(a['skills']))
     evidence = []
+    fulfilled = sorted((set(a.get('neededSkills', [])) & set(b['skills'])) | (set(b.get('neededSkills', [])) & set(a['skills'])))
+    if fulfilled: evidence.append('Offered skills meet stated needs: ' + ', '.join(fulfilled) + '.')
     if b['role'] in a['rolesSought']: evidence.append(f"They bring a role you are seeking: {b['role']}.")
     if a['role'] in b['rolesSought']: evidence.append(f"They are looking for your role: {a['role']}.")
     if new_skills: evidence.append('They add skills: ' + ', '.join(new_skills[:4]) + '.')
@@ -58,5 +77,5 @@ def score(a, b, reference=None):
 
 
 def rank(profile, candidates, reference=None):
-    eligible = [candidate for candidate in candidates if candidate.get('accountType') == 'DEMO' and candidate['id'] != profile.get('id')]
+    eligible = [candidate for candidate in candidates if candidate.get('accountType') == 'DEMO' and candidate['id'] != profile.get('id') and intent_compatible(profile, candidate)]
     return sorted([{'candidate': candidate, **score(profile, candidate, reference)} for candidate in eligible], key=lambda item: (-item['compatibility'], item['candidate']['id']))

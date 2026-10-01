@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { demoReducer, initialDemoState } from './demoState'
 import type { Recommendation, CoffeeProposal } from './demoState'
-const recommendation: Recommendation = { candidate: { id: 'demo-1', accountType: 'DEMO', displayName: 'Fictional', role: 'Frontend engineer', headline: 'Demo', skills: ['React'], interests: ['AI'], rolesSought: ['Backend engineer'], weeklyHours: 8, goal: 'Portfolio project', workingStyle: 'Structured', timezone: 'UTC', availability: [20], projects: [] }, compatibility: 90, forwardScore: 90, reverseScore: 90, contributions: {}, evidence: [], overlapHours: 1, modelVersion: 'test' }
+const recommendation: Recommendation = { candidate: { entityType: 'INDIVIDUAL', matchingIntent: 'COLLABORATOR', description: '', neededSkills: [], id: 'demo-1', accountType: 'DEMO', displayName: 'Fictional', role: 'Frontend engineer', headline: 'Demo', skills: ['React'], interests: ['AI'], rolesSought: ['Backend engineer'], weeklyHours: 8, goal: 'Portfolio project', workingStyle: 'Structured', timezone: 'UTC', availability: [20], projects: [] }, compatibility: 90, forwardScore: 90, reverseScore: 90, contributions: {}, evidence: [], overlapHours: 1, modelVersion: 'test' }
 const matched = () => demoReducer(initialDemoState, { type: 'decide', recommendation, liked: true })
 const proposal: CoffeeProposal = { id: 'coffee', kind: 'Virtual coffee', startsAt: '2026-10-02T18:00:00Z', timezone: 'UTC', note: 'Discuss ideas', status: 'proposed' }
 
 describe('isolated demo collaboration', () => {
   it('requires like and simulated reciprocal interest', () => {
     expect(demoReducer(initialDemoState, { type: 'decide', recommendation, liked: false }).matches).toHaveLength(0)
-    expect(demoReducer(initialDemoState, { type: 'decide', recommendation: { ...recommendation, reverseScore: 69 }, liked: true }).matches).toHaveLength(0)
+    expect(demoReducer(initialDemoState, { type: 'decide', recommendation: { ...recommendation, compatibility: 50 }, liked: true }).matches).toHaveLength(0)
     expect(matched().matches).toHaveLength(1)
   })
   it('does not duplicate decisions or matches', () => {

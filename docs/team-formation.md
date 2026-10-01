@@ -4,7 +4,7 @@
 
 Completed demo profiles can create temporary project drafts with a name, problem description, domain, stage, technologies, up to four distinct additional roles, and weekly hours per person. The profile owner is always included. Drafts live in browser memory and clear when leaving the project screen or reloading.
 
-Java validates the nested profile and project contract at `POST /api/demo/teams`, then calls Python `POST /teams/demo` with bounded timeouts. Python searches only the 264 seeded fictional profiles; it does not construct a guaranteed team or send invitations.
+Java validates the nested profile and project contract at `POST /api/demo/teams`, then calls Python `POST /teams/demo` with bounded timeouts. Python searches only the 600 seeded fictional profiles; it does not construct a guaranteed team or send invitations.
 
 ## Constraints and search
 

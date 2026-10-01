@@ -18,8 +18,22 @@ class OnboardingController {
   @NotBlank @Size(max=80) String goal,
   @NotBlank @Size(max=60) String workingStyle,
   @NotBlank @Size(max=80) String timezone,
-  @NotEmpty @Size(max=168) List<@Min(0) @Max(167) Integer> availability
- ) {}
+  @NotEmpty @Size(max=168) List<@Min(0) @Max(167) Integer> availability,
+  @Pattern(regexp="INDIVIDUAL|ORGANIZATION") String entityType,
+  @Pattern(regexp="PROVIDER|SEEKER|COLLABORATOR") String matchingIntent,
+  @Size(max=1000) String description,
+  @Size(max=20) List<@NotBlank @Size(max=60) String> neededSkills
+ ) {
+  ProfileDraft {
+   entityType = entityType == null ? "INDIVIDUAL" : entityType;
+   matchingIntent = matchingIntent == null ? "COLLABORATOR" : matchingIntent;
+   description = description == null ? "" : description;
+   neededSkills = neededSkills == null ? List.of() : neededSkills;
+  }
+  ProfileDraft(String name, String role, List<String> skills, List<String> interests, List<String> sought, int hours, String goal, String style, String zone, List<Integer> availability) {
+   this(name, role, skills, interests, sought, hours, goal, style, zone, availability, "INDIVIDUAL", "COLLABORATOR", "", List.of());
+  }
+ }
  record ValidatedProfile(ProfileDraft profile, String accountType, boolean persisted) {}
  @PostMapping("/validate")
  ValidatedProfile validate(@Valid @RequestBody ProfileDraft profile) {

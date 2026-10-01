@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 from itertools import combinations
-from .ranking import score, utc_slots
+from .ranking import score, utc_slots, intent_compatible
 
 
 def recommend_team(owner, project, candidates, reference=None, beam_width=16, pool_per_role=8):
     """Bounded beam search; one distinct fictional candidate per requested role."""
     reference = reference or datetime.now(timezone.utc)
     roles = list(dict.fromkeys(project['rolesNeeded']))
-    eligible = {p['id']: p for p in candidates if p.get('accountType') == 'DEMO' and p['id'] != owner.get('id') and p['weeklyHours'] >= project['weeklyHours']}
+    eligible = {p['id']: p for p in candidates if p.get('accountType') == 'DEMO' and p['id'] != owner.get('id') and p['weeklyHours'] >= project['weeklyHours'] and intent_compatible(owner, p)}
     pair_cache = {}
     slot_cache = {}
     def slots(p):
@@ -43,7 +43,7 @@ def recommend_team(owner, project, candidates, reference=None, beam_width=16, po
         return {'feasible': False, 'members': [], 'reason': 'No eligible demo candidates can cover every requested role at this commitment.', 'missingRoles': missing}
     beam = [[]]
     for role in roles:
-        expanded = [team + [candidate] for team in beam for candidate in pools[role] if candidate['id'] not in {p['id'] for p in team}]
+        expanded = [team + [candidate] for team in beam for candidate in pools[role] if candidate['id'] not in {p['id'] for p in team} and all(intent_compatible(candidate, member) for member in team)]
         beam = sorted(expanded, key=lambda team: (-evaluate(team)[0], tuple(p['id'] for p in team)))[:beam_width]
     if not beam: return {'feasible': False, 'members': [], 'reason': 'No team satisfies the requested constraints.', 'missingRoles': roles}
     best = beam[0]

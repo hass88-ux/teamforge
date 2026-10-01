@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, field_validator
@@ -10,6 +10,10 @@ app = FastAPI(title='TeamForge recommendations', docs_url=None, redoc_url=None)
 Text = Annotated[str, Field(min_length=1, max_length=80)]
 
 class Profile(BaseModel):
+    entityType: Literal['INDIVIDUAL', 'ORGANIZATION'] = 'INDIVIDUAL'
+    matchingIntent: Literal['PROVIDER', 'SEEKER', 'COLLABORATOR'] = 'COLLABORATOR'
+    description: Annotated[str, Field(max_length=1000)] = ''
+    neededSkills: Annotated[list[Text], Field(max_length=20)] = []
     displayName: Annotated[str, Field(min_length=1, max_length=60)]
     role: Text
     skills: Annotated[list[Text], Field(min_length=1, max_length=20)]
@@ -29,11 +33,11 @@ class Profile(BaseModel):
         return value
 
 @app.get('/health')
-def health(): return {'status': 'ok', 'modelVersion': 'weighted-reciprocal-v1'}
+def health(): return {'status': 'ok', 'modelVersion': 'weighted-reciprocal-v2'}
 
 @app.post('/recommendations/demo')
 def demo(profile: Profile):
-    return {'accountType': 'DEMO', 'syntheticProfileCount': 264, 'recommendations': recommendations(profile.model_dump())}
+    return {'accountType': 'DEMO', 'syntheticProfileCount': len(PROFILES), 'recommendations': recommendations(profile.model_dump())}
 
 class Project(BaseModel):
     name: Text

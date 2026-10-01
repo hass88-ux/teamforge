@@ -1,4 +1,8 @@
 export type ProfileDraft = {
+  entityType: 'INDIVIDUAL' | 'ORGANIZATION'
+  matchingIntent: 'PROVIDER' | 'SEEKER' | 'COLLABORATOR'
+  description: string
+  neededSkills: string[]
   displayName: string
   role: string
   skills: string[]
@@ -12,13 +16,13 @@ export type ProfileDraft = {
 }
 
 export const roles = ['Backend engineer', 'Frontend engineer', 'Full-stack engineer', 'ML engineer', 'Designer', 'Founder', 'Researcher', 'Student', 'Mobile developer', 'DevOps engineer', 'Data engineer', 'Cybersecurity engineer']
-export const skills = ['Java', 'Spring Boot', 'Python', 'PyTorch', 'React', 'TypeScript', 'PostgreSQL', 'AWS', 'Docker', 'UI/UX', 'Product', 'Mobile', 'Security', 'Data engineering']
+export const skills = ['Java', 'Node.js', 'Spring Boot', 'Python', 'PyTorch', 'React', 'TypeScript', 'PostgreSQL', 'AWS', 'Docker', 'UI/UX', 'Product', 'Mobile', 'Security', 'Data engineering']
 export const domains = ['AI', 'Education', 'Healthcare', 'Climate', 'Fintech', 'Developer tools', 'Cybersecurity', 'Gaming', 'Robotics', 'Research', 'Consumer apps']
 export const goals = ['Hackathon', 'Portfolio project', 'Open source', 'Research collaboration', 'Startup', 'Weekend project']
 export const styles = ['Structured', 'Flexible', 'Fast-moving', 'Research-heavy', 'Design-first', 'Engineering-first', 'Product-first']
 
 export function emptyProfile(): ProfileDraft {
-  return { displayName: '', role: '', skills: [], interests: [], rolesSought: [], weeklyHours: 8, goal: '', workingStyle: '', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', availability: [] }
+  return { entityType: 'INDIVIDUAL', matchingIntent: 'COLLABORATOR', description: '', neededSkills: [], displayName: '', role: '', skills: [], interests: [], rolesSought: [], weeklyHours: 8, goal: '', workingStyle: '', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', availability: [] }
 }
 
 export function stepIsComplete(step: number, profile: ProfileDraft): boolean {

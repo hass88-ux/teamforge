@@ -20,7 +20,7 @@ Completed profiles can now open ranked recommendations, view contribution breakd
 
 ## Simulated collaboration milestone
 
-A visitor's like produces a simulated match only when the fictional candidate's reverse weighted score is at least 70. This is a disclosed demo rule, not a human decision or learned acceptance probability. Passes and lower reverse scores do not produce simulated matches; repeated decisions cannot duplicate matches.
+A visitor's like produces a simulated match only when the fictional candidate's mutual compatibility score is strictly above 50%. This is a disclosed demo rule, not a human decision or learned acceptance probability. Passes and scores of 50% or below do not produce simulated matches; repeated decisions cannot duplicate matches.
 
 Only existing demo matches open the conversation UI. Messages are trimmed and limited to 1000 characters. A scripted reply is explicitly labeled DEMO / SIMULATED REPLY. Coffee-chat proposals support virtual coffee, intro call, or project discussion; dates must be future valid local times. Scheduling uses the browser's visibly identified timezone, stores a UTC instant and timezone, and rejects nonexistent local wall times. Users explicitly click simulate acceptance or decline. No real recipient, email, invitation, meeting link, or calendar integration exists.
 
