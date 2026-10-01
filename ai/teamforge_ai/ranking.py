@@ -76,6 +76,6 @@ def score(a, b, reference=None):
     return {'compatibility': round(reciprocal), 'forwardScore': round(forward, 2), 'reverseScore': round(reverse, 2), 'contributions': contributions, 'reverseContributions': reverse_contributions, 'evidence': evidence, 'overlapHours': overlap, 'modelVersion': MODEL_VERSION, 'referenceWeek': reference.date().isoformat()}
 
 
-def rank(profile, candidates, reference=None):
-    eligible = [candidate for candidate in candidates if candidate.get('accountType') == 'DEMO' and candidate['id'] != profile.get('id') and intent_compatible(profile, candidate)]
+def rank(profile, candidates, reference=None, account_type='DEMO'):
+    eligible = [candidate for candidate in candidates if candidate.get('accountType') == account_type and candidate['id'] != profile.get('id') and intent_compatible(profile, candidate)]
     return sorted([{'candidate': candidate, **score(profile, candidate, reference)} for candidate in eligible], key=lambda item: (-item['compatibility'], item['candidate']['id']))

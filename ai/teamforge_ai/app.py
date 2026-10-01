@@ -61,3 +61,18 @@ class TeamRequest(BaseModel):
 @app.post('/teams/demo')
 def demo_team(request: TeamRequest):
     return recommend_team(request.profile.model_dump(), request.project.model_dump(), PROFILES)
+
+
+class RealCandidate(Profile):
+    id: str
+    accountType: Literal['REAL']
+
+class RealRequest(BaseModel):
+    profile: RealCandidate
+    candidates: Annotated[list[RealCandidate], Field(max_length=200)]
+
+@app.post('/recommendations/real')
+def real_recommendations(request: RealRequest):
+    from .ranking import rank
+    ranked = rank(request.profile.model_dump(), [candidate.model_dump() for candidate in request.candidates], account_type='REAL')
+    return {'accountType': 'REAL', 'recommendations': [item for item in ranked if item['compatibility'] > 50][:20]}

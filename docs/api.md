@@ -6,7 +6,7 @@ Required signals: displayName, role, skills, interests, rolesSought, weeklyHours
 
 Availability values are local weekly hour indexes: Monday 00:00 is 0, Tuesday 00:00 is 24, Sunday 23:00 is 167. Recommendation features must convert these using the supplied timezone before comparing schedules; daylight-saving transitions need explicit handling in the ranking service.
 
-Collection and string bounds prevent unbounded profile payloads. Invalid input returns HTTP 400 without stack traces. This endpoint is an initial contract; profile ownership and persistence will be introduced with authenticated accounts.
+Collection and string bounds prevent unbounded profile payloads. Invalid input returns HTTP 400 without stack traces. This endpoint is an initial contract; authenticated profile ownership and persistence use the endpoints below.
 
 ## Demo recommendations
 
@@ -26,3 +26,9 @@ POST /api/demo/recommendations accepts the same profile draft and returns ranked
 - GET/PUT `/api/profiles/me`: retrieve/update the caller's validated structured profile; never accepts an owner ID. Missing profile returns 404. Save response includes REAL / persisted=true.
 
 CSRF is required on signup, login, logout, and profile writes. Invalid fields return sanitized 400 responses. Basic authentication rate limits return 429. Account/profile responses never expose password hashes; CSRF tokens are returned only by the explicit CSRF endpoint.
+
+## Real discovery
+
+- PUT `/api/profiles/me/visibility`: `{ "discoverable": true | false }`, authenticated + CSRF; changes only the caller's existing profile. New and migrated profiles default to false. Returns the current profile view with `discoverable`.
+- GET `/api/discovery/recommendations`: authenticated, server derives the query profile from the session. Returns REAL, `recommendations`, `searchedProfileCount`, and `poolLimited`. Requires a saved profile (409 otherwise); upstream failures return 503; an empty visible pool returns an empty list without calling Python. Candidate output contains allowlisted public fields, not email, credentials, timezone, or schedule slots. No interaction is recorded.
+- Private Python POST `/recommendations/real`: validated owner profile and up to 200 REAL candidates; ranks the provided pool without seeded/demo fallback. The service must stay private in deployment.

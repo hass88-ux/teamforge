@@ -8,8 +8,12 @@ Session cookies are HttpOnly and SameSite=Lax; production configuration requires
 
 Signup/login have a basic per-instance remote-address limit of 30 attempts per five minutes and a bounded address map. This is not a distributed abuse-prevention system. No proxy headers are trusted for identifying clients; deployment behind a proxy needs an explicitly reviewed rate-limit strategy.
 
-Default backend binding is loopback. There is no public deployment yet. Real-user discovery, mutual matching, messaging authorization, project persistence, email verification, password recovery, account deletion, distributed sessions, and broader abuse controls are unfinished. These limitations must be resolved or clearly constrained before a public real-user beta. Current functionality is not a security certification.
+Default backend binding is loopback. There is no public deployment yet. Real-user mutual matching, messaging authorization, project persistence, email verification, password recovery, account deletion, distributed sessions, and broader abuse controls are unfinished. These limitations must be resolved or clearly constrained before a public real-user beta. Current functionality is not a security certification.
 
 ## Verified
 
 Seven auth/profile integration tests cover CSRF, registration/hashing, login rotation/logout, incorrect credentials, profile ownership/isolation, sanitized validation errors, byte-length rejection, and no persistent account/profile writes from demo validation. The existing backend regression tests still pass. A local browser walkthrough created a fictional QA account and saved a profile; backend restart and subsequent login recovered the same stored profile, and logout returned to the landing page. Live demo recommendations still worked without an account. No QA account constitutes real-user traction.
+
+## Discovery boundary
+
+Authenticated discovery retrieves only explicitly visible profiles and excludes the session owner. A bounded real-only ranking request goes to the loopback/private recommendation service, with no credentials. The Java response reconstructs candidates from the eligible database snapshot and an allowlist of public fields, excluding email, hashes, timezone, and availability slots. Visibility is rechecked after inference. Visibility writes require authenticated ownership and CSRF, and do not accept another account ID. Four integration tests cover private defaults, visibility reversal/edit persistence, self/private exclusion and field minimization, honest empty results, and retryable upstream failures. Three Python tests verify real/demo isolation, intent and threshold rules, self exclusion, and bounded input pools.

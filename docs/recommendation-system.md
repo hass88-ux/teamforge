@@ -4,7 +4,7 @@ Python owns the recommendation logic. Spring validates the incoming profile and 
 
 ## Model 0: demo eligibility
 
-Candidates must be labeled DEMO and cannot be the querying profile. Real-user ranking is not implemented. There are 600 deterministic fictional profiles across 12 role archetypes, varied domains, project goals, experience levels, timezones, schedules, working styles, and commitment levels. No seeded record represents a real person.
+Candidates must be labeled DEMO and cannot be the querying profile. Real-user ranking now accepts only opted-in stored candidates through a separate REAL endpoint. There are 600 deterministic fictional profiles across 12 role archetypes, varied domains, project goals, experience levels, timezones, schedules, working styles, and commitment levels. No seeded record represents a real person.
 
 ## Model 1: weighted reciprocal compatibility
 
@@ -27,3 +27,5 @@ The browser walkthrough verified onboarding → Java validation → Python recom
 ## Intent and skill demand (v2)
 
 Eligibility excludes provider/provider and seeker/seeker pairs before ranking. Collaborators remain eligible for any intent; individuals and organizations follow the same rules. With explicit needed skills, the skill component averages directional offered/needed coverage. This rewards shared Java when a provider offers Java and a seeker needs Java/Python. Without explicit demand the existing complementary skill signal applies. Demo discovery filters displayed reciprocal scores strictly above 50%; a tailored fictional candidate has a compatible intent and fulfills selected needs. Scores are heuristics, not success probabilities. Descriptions remain editable context rather than machine-interpreted evidence. Team search also enforces intent eligibility against the owner and every member.
+
+Real discovery shares the weighted scoring function but filters on REAL account type and never constructs a demo candidate. Java retrieves up to 200 recently updated visible profiles; this is a bounded preview retrieval strategy, not comprehensive search across every account.

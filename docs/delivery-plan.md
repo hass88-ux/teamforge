@@ -1,6 +1,6 @@
 # Ten-day delivery plan
 
-Planning window: September 30 through October 10, 2026, pending deadline confirmation.
+Planning window: September 30 through October 10, 2026, with the October 10 delivery deadline confirmed.
 
 1. Foundation: reproducible builds, architecture, CI, local setup.
 2. Profiles: migrations, validated profile contract, interactive onboarding.
@@ -24,3 +24,7 @@ Each milestone must build, pass relevant tests, update documentation, and become
 ## Usage discipline
 
 Use focused changes and targeted tests. Avoid unnecessary model inference, redundant repository scans, fabricated microcommits, and repeated unchanged status checks. Check account limits at major milestones. No purchased credits or paid services are assumed.
+
+## Current milestone and next priorities
+
+Local demo, accounts, profile persistence, and opt-in real discovery are implemented. Next: persisted likes/passes and mutual matches; matched-user messaging/coffee proposals; real projects/team membership; optional GitHub enrichment; a deployable beta with PostgreSQL and HTTPS; recovery, abuse controls, deletion/privacy notice; responsive/accessibility polish and honest evaluation. These remain release work, not completed features.
