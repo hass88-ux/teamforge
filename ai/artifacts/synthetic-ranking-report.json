@@ -1,0 +1,61 @@
+{
+  "dataset": "600 deterministic synthetic demo profiles",
+  "seed": 42,
+  "referenceWeek": "2026-09-28",
+  "split": {
+    "train": 360,
+    "validation": 120,
+    "test": 120
+  },
+  "splitPolicy": "Profile-disjoint; pairs and candidate pools never cross splits. No tailored demo candidates.",
+  "trainPairs": 10800,
+  "positiveTrainPairs": 166,
+  "validationEpochTrials": [
+    {
+      "epochs": 40,
+      "queries": 120,
+      "queriesWithoutRelevantCandidates": 11,
+      "ndcgAt5": {
+        "weighted": 0.223034,
+        "learned": 0.0,
+        "random": 0.043888
+      }
+    },
+    {
+      "epochs": 80,
+      "queries": 120,
+      "queriesWithoutRelevantCandidates": 11,
+      "ndcgAt5": {
+        "weighted": 0.223034,
+        "learned": 0.0,
+        "random": 0.043888
+      }
+    },
+    {
+      "epochs": 160,
+      "queries": 120,
+      "queriesWithoutRelevantCandidates": 11,
+      "ndcgAt5": {
+        "weighted": 0.223034,
+        "learned": 0.0,
+        "random": 0.043888
+      }
+    }
+  ],
+  "selectedEpochs": 40,
+  "test": {
+    "queries": 120,
+    "queriesWithoutRelevantCandidates": 15,
+    "ndcgAt5": {
+      "weighted": 0.21928,
+      "learned": 0.0,
+      "random": 0.027496
+    }
+  },
+  "limitations": [
+    "Labels are hand-authored synthetic preferences, not human decisions.",
+    "Metrics measure agreement with this generator, not real-world matching quality.",
+    "No probability calibration or deployment claim.",
+    "No live model promotion; production keeps weighted-reciprocal-v2."
+  ]
+}
