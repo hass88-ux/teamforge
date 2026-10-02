@@ -20,9 +20,9 @@ If the initial top score is below 85, create a clearly disclosed fictional candi
 
 ## Verification and limitations
 
-Nine ranking tests verify dataset identity/diversity, demo guarantee across all role/intent combinations, scoring symmetry/bounds/contribution sums, timezone conversion, self/real-profile exclusion, and stronger ranking for an explicitly compatible pair. These are correctness tests, not evidence of real-world predictive quality. No ML evaluation, user traction, or synthetic ranking benchmark has been claimed.
+Nine ranking tests verify dataset identity/diversity, demo guarantee across all role/intent combinations, scoring symmetry/bounds/contribution sums, timezone conversion, self/real-profile exclusion, and stronger ranking for an explicitly compatible pair. These are correctness tests, not evidence of real-world predictive quality. An offline synthetic ranking benchmark is now available below; no user traction or real-world predictive quality is claimed.
 
-The browser walkthrough verified onboarding → Java validation → Python recommendations → scores/evidence → fictional projects → like → pass. Demo choices are temporary browser state; simulated matches and scripted demo messaging are now implemented; real-user mutual matches and interaction persistence remain future work. Candidate ranking is an exhaustive CPU baseline suitable for this small demo pool; larger datasets will require retrieval and caching.
+The browser walkthrough verified onboarding → Java validation → Python recommendations → scores/evidence → fictional projects → like → pass. Demo choices are temporary browser state; simulated matches and scripted demo messaging are now implemented; real-user mutual matches and interaction persistence are now implemented. Candidate ranking is an exhaustive CPU baseline suitable for this small demo pool; larger datasets will require retrieval and caching.
 
 ## Intent and skill demand (v2)
 
@@ -33,3 +33,17 @@ Real discovery shares the weighted scoring function but filters on REAL account 
 ## Description skill suggestions
 
 English rules identify the supported skill vocabulary and aliases with word boundaries, scope offer/need cues by clause, and conservatively skip negated clauses. Unclear mentions require choosing a direction. This is an NLP baseline, not a trained model or general language understanding: unknown skills, other languages, and complex phrasing can be missed. Description text stays within the TeamForge service; no external model provider is called. Suggestions never change intent or saved skills automatically. Only user-confirmed structured selections enter ranking.
+
+## Offline synthetic learned baseline
+
+Run `python -m teamforge_ai.evaluation` from `ai`. A regularized logistic model trains on seven minimum-of-two-direction feature values. The training, validation, and test groups contain 360/120/120 distinct profiles; candidate pairs stay inside their group. The experiment uses a fixed reference week, excludes tailored demo additions, and samples 30 training candidates per profile. Epoch count is selected from 40/80/160 on validation, then the test group is evaluated. Reports and learned parameters are versioned under `ai/artifacts`.
+
+Labels are deterministic hand-authored grades based on role coverage, skill demand, interest, shared time, and commitment. This is a synthetic generator agreement test, not evidence of actual likes or successful teams. nDCG@5 measures graded ordering; queries without any relevant candidate are counted separately and excluded from its average. Ranking includes every intent-eligible candidate in the split, without applying the live >50 cutoff.
+
+| Held-out synthetic method | nDCG@5 |
+| --- | ---: |
+| Current weighted reciprocal scorer | 0.219280 |
+| Learned logistic baseline | 0.000000 |
+| Seeded random ordering | 0.027496 |
+
+105 of 120 held-out queries had some relevance. Training had 166 positive labels among 10,800 pairs (1.54%). The learned baseline failed this benchmark and is not promoted. Severe class imbalance and a linear model's limited ability to express the label generator's conditions are concerns to investigate, not proven explanations. Further model changes require a fresh holdout or nested validation; these test results must not become tuning feedback. The live scorer remains weighted-reciprocal-v2. No real-world prediction or probability-calibration claim is made.

@@ -13,3 +13,7 @@ python -m uvicorn teamforge_ai.app:app --host 127.0.0.1 --port 8001
 `GET /health` returns the model version. `POST /recommendations/demo` accepts the profile contract and returns 20 scored demo candidates. This is a private internal service: expose only the Java API publicly. Production needs bounded request sizes, request rate controls, and service network isolation before launch.
 
 No paid APIs, neural inference, database, or GPU are needed for this baseline. All profiles and project history are synthetic. See `docs/recommendation-system.md` in the repository root for weights, semantics, limitations, and disclosure.
+
+## Offline synthetic model experiment
+
+Run python -m teamforge_ai.evaluation from this directory. It trains a small regularized logistic baseline without new dependencies, selects epoch count on validation profiles, then evaluates held-out profiles. Versioned reports/model parameters are written under ai/artifacts. The API does not load that model. Synthetic labels and scores do not demonstrate user outcomes or calibrated success probabilities.
