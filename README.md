@@ -30,13 +30,13 @@ AI service: follow [ai/README.md](ai/README.md) and start it on port 8001 before
 
 ## Planned product
 
-Interactive onboarding, isolated demo sessions, 600 demo profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and owner-scoped profile storage work locally; optional public-only GitHub enrichment is planned. Demo onboarding and baseline discovery are implemented. persisted projects/interactions, trained models, and GitHub OAuth remain unimplemented. Accounts and owner-scoped profiles now persist locally. Demo team recommendations use a bounded beam-search heuristic; real-user team formation is not yet implemented. Demo matches and conversations are clearly labeled simulations.
+Interactive onboarding, isolated demo sessions, 600 demo profiles, explained reciprocal ranking, discovery, mutual matches, projects, messaging, coffee-chat proposals, and team optimization. Real-user authentication and owner-scoped profile storage work locally; optional public-only GitHub enrichment is planned. Demo onboarding and baseline discovery are implemented. Trained models and GitHub OAuth remain unimplemented. Accounts and owner-scoped profiles now persist locally. Demo team recommendations use a bounded beam-search heuristic; Real projects and consent-based team invitations persist locally; automatic real-user team recommendations are planned. Demo matches and conversations are clearly labeled simulations.
 
 See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [recommendation baseline](docs/recommendation-system.md), [team formation](docs/team-formation.md), and [delivery plan](docs/delivery-plan.md).
 
 ## Verification
 
-Current local checks pass: 32 Java tests, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current local checks pass: 34 Java tests, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -65,3 +65,5 @@ After signing in and saving a profile, choose **Discover people**. Profiles rema
 Like or pass saves your choice. Likes require both profiles to be discoverable, compatible intents, and a freshly checked score above 50%. Only two genuine reciprocal likes create a match. Real conversations have no automated replies. Messages persist in the local database, are accessible only to the two active members, and refresh manually. Each send includes a client request UUID so retries do not create duplicates. Conversations page in batches of 50; sending is limited to 30 new messages per user per minute. Unmatching closes access for both members and prevents further contact for that pair in this preview; records remain stored, pending retention/deletion controls. Hiding discovery visibility does not close existing matches.
 
 This milestone has not added live push notifications, read receipts, attachments, reporting/moderation, or encryption beyond future HTTPS transport. Local H2 is verified; PostgreSQL deployment verification remains release work.
+
+Real projects are private saved drafts with a name, description, and stage. Owners can invite active mutual matches; invited people accept or decline in Projects & teams. Accepted teammates remain on the project if the original match ends. Project editing, removal/leave controls, and automatic real-team ranking are follow-up work.

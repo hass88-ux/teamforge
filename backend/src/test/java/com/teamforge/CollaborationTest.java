@@ -149,4 +149,40 @@ class CollaborationTest {
   http.perform(delete("/api/matches/"+id).with(user(a.email)).with(csrf())).andExpect(status().isNoContent());
   http.perform(get(path).with(user(b.email))).andExpect(status().isNotFound());
  }
+ private String project(UUID client,String name) { return "{\"clientId\":\""+client+"\",\"name\":\""+name+"\",\"description\":\"Build a learning tool\",\"stage\":\"Idea\"}"; }
+ @Test void projectsRequireOwnershipConsentAndActiveMatches() throws Exception {
+  UUID match=match(), client=UUID.randomUUID(); String draft=project(client,"Learning team");
+  http.perform(get("/api/projects")).andExpect(status().isUnauthorized());
+  http.perform(post("/api/projects").with(user(a.email)).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(status().isForbidden());
+  var created=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(status().isOk()).andExpect(jsonPath("$.yourStatus").value("OWNER")).andReturn();
+  UUID id=UUID.fromString(json.readTree(created.getResponse().getContentAsString()).get("id").asText());
+  http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(jsonPath("$.id").value(id.toString()));
+  http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(client,"Changed"))).andExpect(status().isConflict());
+  http.perform(get("/api/projects").with(user(outside.email))).andExpect(jsonPath("$.length()").value(0));
+  String invite="{\"matchId\":\""+match+"\"}";
+  http.perform(post("/api/projects/"+id+"/members").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(status().isNotFound());
+  http.perform(post("/api/projects/"+id+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(status().isOk()).andExpect(jsonPath("$.members.length()").value(2));
+  http.perform(post("/api/projects/"+id+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(jsonPath("$.members.length()").value(2));
+  http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$[0].yourStatus").value("INVITED"));
+  http.perform(post("/api/projects/"+id+"/response").with(user(outside.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isNotFound());
+  http.perform(post("/api/projects/"+id+"/response").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isForbidden());
+  http.perform(post("/api/projects/"+id+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(jsonPath("$.yourStatus").value("ACCEPTED"));
+  http.perform(post("/api/projects/"+id+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DECLINED\"}")).andExpect(status().isConflict());
+  http.perform(delete("/api/matches/"+match).with(user(a.email)).with(csrf())).andExpect(status().isNoContent());
+  http.perform(post("/api/projects/"+id+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(status().isNotFound());
+  http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$[0].yourStatus").value("ACCEPTED"));
+ }
+ @Test void declinedProjectIsHiddenAndProjectLimitIsEnforced() throws Exception {
+  UUID match=match();
+  var created=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"First"))).andReturn();
+  String id=json.readTree(created.getResponse().getContentAsString()).get("id").asText();
+  String invite="{\"matchId\":\""+match+"\"}";
+  http.perform(post("/api/projects/"+id+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(status().isOk());
+  http.perform(post("/api/projects/"+id+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DECLINED\"}")).andExpect(status().isOk());
+  http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$.length()").value(0));
+  http.perform(post("/api/projects/"+id+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(invite)).andExpect(status().isConflict());
+  for (int i=1;i<20;i++) http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Project "+i))).andExpect(status().isOk());
+  http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Overflow"))).andExpect(status().isTooManyRequests());
+  http.perform(post("/api/projects").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID()," "))).andExpect(status().isBadRequest());
+ }
 }
