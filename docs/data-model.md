@@ -16,3 +16,5 @@ Profiles survive reload and backend restart. In-memory login sessions do not sur
 Flyway V2 adds `profiles.discoverable`, default false, so existing saved accounts stay private. Visibility is owned by the same account UUID and survives profile edits. No demo record is inserted into these tables.
 
 Flyway V3 adds `profile_decisions` (actor/target composite key), `collaboration_matches` (unique canonical member pair, score at match, creation/closure timestamps), and `collaboration_messages` (database sequence, match, server-derived sender, client request UUID, bounded body, timestamp). Foreign keys bind these records to real accounts; demo never writes them. Closed matches retain history but the application denies access and future contact. Database-backed account deletion would cascade, but no user-facing deletion endpoint exists yet.
+
+Flyway V4 adds `coffee_proposals`, scoped to a real match and proposer, with unique per-proposer client request IDs, UTC start time, IANA timezone, kind, note, status, and creation time. Match locking serializes proposals and responses against unmatching. These records are retained with the conversation.

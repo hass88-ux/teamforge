@@ -36,9 +36,11 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-Current local checks pass: 29 Java tests, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current local checks pass: 32 Java tests, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
+
+Real coffee invitations now support proposing, recipient accept/decline, cancellation, and persistent status within matched conversations. No calendar event, meeting link, or email is created.
 
 No public deployment, real-user metrics, learned-model evaluation, or production security certification is claimed. Demo state is temporary and profiles use concise demo labels and automated replies are identified. See [security](docs/security.md), [privacy](docs/privacy.md), and [persistence](docs/data-model.md) for current guarantees and unfinished work.
 

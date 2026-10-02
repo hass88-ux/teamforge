@@ -119,4 +119,34 @@ class CollaborationTest {
   assertThat(sql.queryForObject("SELECT COUNT(*) FROM profile_decisions WHERE target_id=?",Long.class,newCandidate.id)).isZero();
  }
 
+ private String proposal(UUID client,Instant time) { return "{\"clientId\":\""+client+"\",\"kind\":\"Virtual coffee\",\"startsAt\":\""+time+"\",\"timezone\":\"America/New_York\",\"note\":\"Discuss Java\"}"; }
+ @Test void proposalsRequireMembershipCsrfAndValidFutureTimes() throws Exception {
+  UUID id=match(); String path="/api/matches/"+id+"/proposals";
+  http.perform(get(path).with(user(outside.email))).andExpect(status().isNotFound());
+  http.perform(post(path).with(user(a.email)).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),Instant.now().plusSeconds(3600)))).andExpect(status().isForbidden());
+  for (Instant time:List.of(Instant.now().minusSeconds(60),Instant.now().plusSeconds(181L*86400))) http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),time))).andExpect(status().isBadRequest());
+  http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),Instant.now().plusSeconds(3600)).replace("America/New_York","Invalid/Zone"))).andExpect(status().isBadRequest());
+ }
+ @Test void proposalRetriesAndResponseConsentAreEnforced() throws Exception {
+  UUID id=match(),client=UUID.randomUUID(); String path="/api/matches/"+id+"/proposals"; String body=proposal(client,Instant.now().plusSeconds(3600));
+  var saved=http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andReturn();
+  String proposalId=json.readTree(saved.getResponse().getContentAsString()).get("id").asText();
+  http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(jsonPath("$.id").value(proposalId));
+  http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body.replace("Discuss Java","Different note"))).andExpect(status().isConflict());
+  String responsePath=path+"/"+proposalId+"/response";
+  http.perform(post(responsePath).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isForbidden());
+  http.perform(post(responsePath).with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(jsonPath("$.status").value("ACCEPTED"));
+  http.perform(post(responsePath).with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"DECLINED\"}")).andExpect(status().isConflict());
+  http.perform(post(responsePath).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"CANCELLED\"}")).andExpect(jsonPath("$.status").value("CANCELLED"));
+  http.perform(get(path).with(user(b.email))).andExpect(jsonPath("$[0].status").value("CANCELLED")).andExpect(jsonPath("$[0].fromYou").value(false));
+ }
+ @Test void proposalAccessEndsOnUnmatchAndPendingPoolIsBounded() throws Exception {
+  UUID id=match(); String path="/api/matches/"+id+"/proposals";
+  for (int i=0;i<10;i++) http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),Instant.now().plusSeconds(3600)))).andExpect(status().isOk());
+  http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),Instant.now().plusSeconds(3600)))).andExpect(status().isTooManyRequests());
+  sql.update("UPDATE coffee_proposals SET starts_at=? WHERE id=(SELECT id FROM coffee_proposals WHERE match_id=? LIMIT 1)",java.sql.Timestamp.from(Instant.now().minusSeconds(60)),id);
+  http.perform(post(path).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(proposal(UUID.randomUUID(),Instant.now().plusSeconds(3600)))).andExpect(status().isOk());
+  http.perform(delete("/api/matches/"+id).with(user(a.email)).with(csrf())).andExpect(status().isNoContent());
+  http.perform(get(path).with(user(b.email))).andExpect(status().isNotFound());
+ }
 }

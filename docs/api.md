@@ -40,3 +40,9 @@ CSRF is required on signup, login, logout, and profile writes. Invalid fields re
 - GET `/api/matches/{id}/messages?after=0`: active members only; up to 50 messages ordered by sequence, plus `hasMore` and `nextAfter`. Missing, closed, or unauthorized conversations all return 404.
 - POST `/api/matches/{id}/messages`: `{ clientId: UUID, text: string }`, authenticated + CSRF and active membership; nonblank, at most 1000 characters. Same user/match/client ID repeats return the original message; a changed body with that ID returns 409. At most 30 new messages per sender per minute (429 thereafter). The server assigns sender, sequence, and timestamp.
 - DELETE `/api/matches/{id}`: authenticated + CSRF and active membership, 204. Closes the pair, removes it from active lists, and prevents all further conversation access/contact. Stored records remain; retention/deletion controls are pending.
+
+## Matched coffee invitations
+
+GET/POST `/api/matches/{id}/proposals`: active members only. Creation requires CSRF plus `{clientId, kind, startsAt, timezone, note}`. Kind is Virtual coffee, Intro call, or Project discussion; startsAt is a future UTC ISO instant within 180 days; timezone must be a valid IANA zone; note is at most 500 characters. Each invitation represents a 30-minute conversation. Matching client IDs are retry-safe; changed details return 409. Up to ten future pending invitations per match; excess returns 429. GET returns at most 100 recent invitations.
+
+POST `/api/matches/{id}/proposals/{proposalId}/response` with `{status: ACCEPTED|DECLINED|CANCELLED}` requires CSRF and membership. Only the recipient accepts/declines a pending invitation. Either member can cancel an upcoming pending/accepted invitation. Final/conflicting or elapsed-time transitions return 409; identical repeated responses return the saved state. Closed/unauthorized matches return 404. No external notification, calendar event, or meeting URL is generated.

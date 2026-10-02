@@ -29,7 +29,7 @@ class CollaborationController {
  record MessageDraft(@NotNull UUID clientId,@NotBlank @Size(max=1000) String text) {}
  record Message(long sequence,UUID clientId,boolean fromYou,String text,Instant sentAt) {}
  record MatchView(UUID id,String displayName,String entityType,String matchingIntent,int compatibility,Instant createdAt) {}
- private UUID owner(Authentication auth) { return accounts.findByEmail(auth.getName()).orElseThrow(() -> error(401)).id; }
+ UUID owner(Authentication auth) { return accounts.findByEmail(auth.getName()).orElseThrow(() -> error(401)).id; }
  private ResponseStatusException error(int status) { return new ResponseStatusException(HttpStatus.valueOf(status)); }
  private OnboardingController.ProfileDraft draft(StoredProfile profile) {
   try { return json.readValue(profile.profileJson,OnboardingController.ProfileDraft.class); }
@@ -43,7 +43,7 @@ class CollaborationController {
   UUID first=a.toString().compareTo(b.toString())<0?a:b; UUID second=first.equals(a)?b:a;
   return sql.queryForList("SELECT * FROM collaboration_matches WHERE member_a=? AND member_b=?"+(lock?" FOR UPDATE":""),first,second);
  }
- private UUID member(UUID match,UUID owner,boolean lock) {
+ UUID member(UUID match,UUID owner,boolean lock) {
   var rows=sql.queryForList("SELECT member_a,member_b FROM collaboration_matches WHERE id=? AND closed_at IS NULL AND (member_a=? OR member_b=?)"+(lock?" FOR UPDATE":""),match,owner,owner);
   if (rows.isEmpty()) throw error(404);
   return owner.equals(rows.getFirst().get("member_a"))?(UUID)rows.getFirst().get("member_b"):(UUID)rows.getFirst().get("member_a");

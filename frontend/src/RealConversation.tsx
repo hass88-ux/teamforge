@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { accountRequest } from './accountApi'
 import './DemoConversation.css'
+import CoffeeInvitations from './CoffeeInvitations'
 
 export type RealMatch = { id: string; displayName: string; entityType: string; matchingIntent: string; compatibility: number }
 type Message = { sequence: number; clientId: string; fromYou: boolean; text: string; sentAt: string }
@@ -63,6 +64,6 @@ export default function RealConversation({ match, onBack, onUnmatched }: { match
     <div className="message-list" role="log" aria-label="Conversation messages" aria-live="polite">{!loading && !messages.length && <p>Introduce yourself and share something you’d like to build.</p>}{messages.map(message => <article key={message.sequence} className={`message ${message.fromYou ? 'you' : 'received'}`}><strong>{message.fromYou ? 'You' : match.displayName}</strong><p>{message.text}</p><time dateTime={message.sentAt}>{new Date(message.sentAt).toLocaleString()}</time></article>)}</div>
     <button className="secondary" disabled={loading || busy} onClick={() => void load()}>{loading ? 'Loading…' : hasMore ? 'Load more messages' : 'Refresh messages'}</button>
     <form onSubmit={send}><label className="input-label" htmlFor="real-message">Your message</label><textarea id="real-message" maxLength={1000} value={text} onChange={event => setText(event.target.value)} placeholder="What would you like to build together?"/><div className="onboarding-controls"><span className="note">{text.length} / 1000</span><button disabled={busy || !text.trim()}>{busy ? 'Sending…' : 'Send message'}</button></div></form>
-    <section className="liked-list"><button className="text-button" disabled={busy} onClick={() => setConfirmEnd(true)}>Unmatch</button>{confirmEnd && <div role="alert"><p>End this match? Both people will lose access to this conversation and won’t be able to match or message each other again in this preview.</p><div className="actions"><button disabled={busy} onClick={() => void unmatch()}>End match</button><button className="secondary" disabled={busy} onClick={() => setConfirmEnd(false)}>Keep match</button></div></div>}</section>
+    <CoffeeInvitations matchId={match.id} partner={match.displayName}/><section className="liked-list"><button className="text-button" disabled={busy} onClick={() => setConfirmEnd(true)}>Unmatch</button>{confirmEnd && <div role="alert"><p>End this match? Both people will lose access to this conversation and won’t be able to match or message each other again in this preview.</p><div className="actions"><button disabled={busy} onClick={() => void unmatch()}>End match</button><button className="secondary" disabled={busy} onClick={() => setConfirmEnd(false)}>Keep match</button></div></div>}</section>
   </section>
 }
