@@ -36,7 +36,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-The full 34-test Java suite passed at the saved-project milestone; the updated 15-test collaboration suite passes with project management, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+The full 34-test Java suite passed at the saved-project milestone; the updated 15-test collaboration suite passes with project management, 22 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -54,7 +54,7 @@ For future PostgreSQL deployment, activate Spring profile `production` and set `
 
 The demo contains 600 deterministic fictional profiles, including individuals and organizations. Onboarding collects provider, seeker, or collaborator intent; editable descriptions; offered skills; and needed skills (including Node.js). Providers exclude providers, seekers exclude seekers, and collaborators can match any intent. Discovery shows mutual compatibility above 50% before a like, profile type, intent, and “No GitHub connected” for these unlinked profiles. Swipe left/right, use arrow keys on the card, or use Pass/Like buttons. A like simulates a match and opens the existing in-app demo messaging flow; fictional replies are labeled. Real discovery supports opted-in saved profiles, persistent likes/passes, mutual matches, and matched-user messaging.
 
-Descriptions are editable profile text. Structured offered/needed skill selections drive the heuristic; free text is not yet interpreted by a language model. Existing saved profiles receive safe defaults for the new fields.
+Descriptions are editable profile text. Structured offered/needed skill selections drive the heuristic; English description skill suggestions use a conservative rule-based extractor. Users review and explicitly add suggestions; free text is not interpreted by a language model. Existing saved profiles receive safe defaults for the new fields.
 
 ### Real-profile discovery
 
@@ -67,3 +67,5 @@ Like or pass saves your choice. Likes require both profiles to be discoverable, 
 This milestone has not added live push notifications, read receipts, attachments, reporting/moderation, or encryption beyond future HTTPS transport. Local H2 is verified; PostgreSQL deployment verification remains release work.
 
 Real projects are private saved drafts with a name, description, and stage. Owners can invite active mutual matches; invited people accept or decline in Projects & teams. Accepted teammates remain on the project if the original match ends. Owners can edit project details and remove teammates; members can leave. Automatic real-team ranking remains follow-up work.
+
+Onboarding can suggest offered/needed skills from English descriptions. Review each suggestion and choose Add; existing selections are preserved. Ambiguous mentions can be classified manually. This is a rule-based baseline, not a trained language model. Four extraction tests and two Java proxy/validation tests cover this addition.

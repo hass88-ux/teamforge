@@ -7,6 +7,14 @@ from .demo import PROFILES
 from .teams import recommend_team
 
 app = FastAPI(title='TeamForge recommendations', docs_url=None, redoc_url=None)
+class DescriptionRequest(BaseModel):
+    description: Annotated[str, Field(min_length=1, max_length=1000)]
+
+@app.post('/description/skills')
+def description_skills(request: DescriptionRequest):
+    from .description import suggest
+    return suggest(request.description)
+
 Text = Annotated[str, Field(min_length=1, max_length=80)]
 
 class Profile(BaseModel):
