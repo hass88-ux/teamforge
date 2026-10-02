@@ -217,4 +217,24 @@ class CollaborationTest {
   http.perform(post(base+"/leave").with(user(b.email)).with(csrf())).andExpect(status().isNotFound());
   http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$.length()").value(0));
  }
+ @Test void accountExportIncludesOnlyOwnersRecordsAndNoCredentials() throws Exception {
+  UUID id=match();
+  http.perform(post("/api/matches/"+id+"/messages").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(message(UUID.randomUUID(),"My authored message"))).andExpect(status().isOk());
+  http.perform(post("/api/matches/"+id+"/messages").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(message(UUID.randomUUID(),"Other private message"))).andExpect(status().isOk());
+  http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"My project"))).andExpect(status().isOk());
+  http.perform(post("/api/projects").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Other private project"))).andExpect(status().isOk());
+  http.perform(delete("/api/matches/"+id).with(user(a.email)).with(csrf())).andExpect(status().isNoContent());
+  http.perform(get("/api/account/export")).andExpect(status().isUnauthorized());
+  var exported=http.perform(get("/api/account/export").with(user(a.email)))
+   .andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"))
+   .andExpect(header().string("Content-Disposition","attachment; filename=teamforge-account-data.json"))
+   .andExpect(jsonPath("$.account.id").value(a.id.toString()))
+   .andExpect(jsonPath("$.account.email").value(a.email))
+   .andExpect(jsonPath("$.profile.data.displayName").value("Alice"))
+   .andExpect(jsonPath("$.sentMessages.length()").value(1))
+   .andExpect(jsonPath("$.ownedProjects.length()").value(1))
+   .andExpect(jsonPath("$.matches[0].id").value(id.toString())).andReturn();
+  assertThat(exported.getResponse().getContentAsString()).contains("My authored message","My project").doesNotContain("Other private message","Other private project",b.email,"password","hashed","JSESSIONID");
+  http.perform(get("/api/account/export").with(user(outside.email))).andExpect(jsonPath("$.sentMessages.length()").value(0)).andExpect(jsonPath("$.matches.length()").value(0));
+ }
 }

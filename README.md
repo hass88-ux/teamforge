@@ -71,3 +71,5 @@ Real projects are private saved drafts with a name, description, and stage. Owne
 Onboarding can suggest offered/needed skills from English descriptions. Review each suggestion and choose Add; existing selections are preserved. Ambiguous mentions can be classified manually. This is a rule-based baseline, not a trained language model. Four extraction tests and two Java proxy/validation tests cover this addition.
 
 Offline model evaluation now trains and compares a logistic baseline with weighted and random ranking on profile-disjoint synthetic splits. The learned model underperformed (held-out nDCG@5 0.000 versus weighted 0.219); the live scorer is unchanged. Results are in ai/artifacts/synthetic-ranking-report.json. Three additional evaluation correctness tests pass. These metrics describe synthetic labels, not user outcomes.
+
+Signed-in users can choose Download my data to download their saved profile and activity as JSON. Exports include retained history but exclude credentials and other users' private content. This is data access, not account deletion; deletion and retention policies remain release work.

@@ -32,3 +32,5 @@ Local demo, accounts, profile persistence, and opt-in real discovery are impleme
 Description-based skill suggestions are implemented as a reviewed English rule-based baseline. Next intelligence work: measured model evaluation and optional GitHub enrichment; no trained-model claim is made.
 
 Offline synthetic model evaluation is implemented with profile-disjoint train/validation/test groups. The trained logistic baseline failed to improve held-out ranking and was not promoted. Remaining intelligence work needs better training data and fresh evaluation before production adoption.
+
+Account data download is implemented with owner-only fields, no-cache responses, and isolation coverage. Account recovery, abuse controls, retention/deletion, and public hosting remain release work.

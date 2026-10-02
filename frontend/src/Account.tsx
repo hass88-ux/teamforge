@@ -55,7 +55,20 @@ export default function Account({ initialMode, onExit }: { initialMode: 'login' 
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot reach the account service.') }
     finally { setBusy(false) }
   }
+  async function downloadData() {
+    if (busy) return
+    setBusy(true); setError('')
+    try {
+      const response = await accountRequest('/api/account/export')
+      if (!response.ok) throw new Error(response.status === 401 ? 'Your session expired. Please log in again.' : 'Cannot download your data. Please try again.')
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a'); link.href = url; link.download = 'teamforge-account-data.json'
+      document.body.appendChild(link); link.click(); link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot download your data.') }
+    finally { setBusy(false) }
+  }
   if (loading) return <section className="onboarding"><p role="status">Checking your session…</p></section>
-  if (account) return <><div className="account-strip"><span>Signed in as {account.email} · Real account</span><button className="secondary" onClick={() => void logout()} disabled={busy}>Log out</button></div>{error && <p className="error" role="alert">{error}</p>}<Onboarding key={account.id} mode="REAL" initialProfile={profile} onExit={onExit}/></>
+  if (account) return <><div className="account-strip"><span>Signed in as {account.email} · Real account</span><div className="actions"><button className="secondary" onClick={() => void downloadData()} disabled={busy}>Download my data</button><button className="secondary" onClick={() => void logout()} disabled={busy}>Log out</button></div></div>{error && <p className="error" role="alert">{error}</p>}<Onboarding key={account.id} mode="REAL" initialProfile={profile} onExit={onExit}/></>
   return <section className="auth-form"><span className="demo-label">REAL ACCOUNT · YOUR PROFILE IS SAVED</span><h1>{mode === 'signup' ? 'Start building.' : 'Welcome back.'}</h1><p className="onboarding-subtitle">{mode === 'signup' ? 'Create your account and build your collaboration profile.' : 'Log in to edit your saved collaboration profile.'}</p><p className="note">Create a profile, discover compatible people, and start a conversation when you both like each other. Try demo without an account.</p><form onSubmit={submit}><label className="input-label" htmlFor="account-email">Email</label><input id="account-email" type="email" autoComplete="email" maxLength={254} required value={email} onChange={event => setEmail(event.target.value)}/><label className="input-label" htmlFor="account-password">Password</label><input id="account-password" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={12} maxLength={72} required value={password} onChange={event => setPassword(event.target.value)}/><p className="note">At least 12 characters. Passwords are hashed; they are never part of your public profile. No email verification or password reset is available yet.</p>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Sign up' : 'Log in'}</button><button type="button" className="secondary" disabled={busy} onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError('') }}>{mode === 'signup' ? 'Already have an account?' : 'Create an account'}</button></div></form><button className="text-button" onClick={onExit}>Back to home</button></section>
 }
