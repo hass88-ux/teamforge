@@ -22,8 +22,9 @@ class ProjectController {
  record Draft(@NotNull UUID clientId,@NotBlank @Size(max=80) String name,@NotBlank @Size(max=1000) String description,@NotBlank @Pattern(regexp="Idea|Prototype|In progress") String stage) {}
  record Invite(@NotNull UUID matchId) {}
  record Response(@NotBlank @Pattern(regexp="ACCEPTED|DECLINED") String status) {}
+ record Edit(@NotBlank @Size(max=80) String name,@NotBlank @Size(max=1000) String description,@NotBlank @Pattern(regexp="Idea|Prototype|In progress") String stage,@NotNull @Min(0) Long revision) {}
  record Member(UUID id,String displayName,String status) {}
- record Project(UUID id,boolean owned,String name,String description,String stage,String yourStatus,List<Member> members) {}
+ record Project(UUID id,boolean owned,String name,String description,String stage,long revision,String yourStatus,List<Member> members) {}
  private ResponseStatusException error(int status) { return new ResponseStatusException(HttpStatus.valueOf(status)); }
  private Map<String,Object> access(UUID id,UUID actor,boolean owner) {
   var rows=sql.queryForList("SELECT * FROM projects WHERE id=? FOR UPDATE",id);
@@ -40,13 +41,13 @@ class ProjectController {
  private Project view(Map<String,Object> p,UUID actor) {
   UUID id=(UUID)p.get("id"),owner=(UUID)p.get("owner_id"); boolean owned=actor.equals(owner);
   var members=new ArrayList<Member>(); members.add(new Member(owner,name(owner),"OWNER"));
-  members.addAll(sql.query("SELECT account_id,status FROM project_members WHERE project_id=? ORDER BY account_id",(r,n)->new Member(r.getObject(1,UUID.class),name(r.getObject(1,UUID.class)),r.getString(2)),id));
+  members.addAll(sql.query("SELECT account_id,COALESCE(ended_reason,status) FROM project_members WHERE project_id=? ORDER BY account_id",(r,n)->new Member(r.getObject(1,UUID.class),name(r.getObject(1,UUID.class)),r.getString(2)),id));
   String status=owned?"OWNER":members.stream().filter(m->m.id().equals(actor)).findFirst().orElseThrow().status();
-  return new Project(id,owned,(String)p.get("name"),(String)p.get("description"),(String)p.get("stage"),status,members);
+  return new Project(id,owned,(String)p.get("name"),(String)p.get("description"),(String)p.get("stage"),((Number)p.get("revision")).longValue(),status,members);
  }
  @GetMapping List<Project> list(Authentication auth) {
   UUID actor=collaboration.owner(auth);
-  return transaction.execute(s->sql.queryForList("SELECT p.* FROM projects p WHERE owner_id=? OR EXISTS(SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.account_id=? AND m.status IN ('INVITED','ACCEPTED')) ORDER BY created_at DESC,id LIMIT 100",actor,actor).stream().map(p->view(p,actor)).toList());
+  return transaction.execute(s->sql.queryForList("SELECT p.* FROM projects p WHERE owner_id=? OR EXISTS(SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.account_id=? AND m.status IN ('INVITED','ACCEPTED')) ORDER BY created_at DESC,id LIMIT 100 FOR UPDATE",actor,actor).stream().map(p->view(p,actor)).toList());
  }
  @PostMapping Project create(@Valid @RequestBody Draft draft,Authentication auth) {
   UUID actor=collaboration.owner(auth);
@@ -77,6 +78,31 @@ class ProjectController {
    var p=access(id,actor,false); if (actor.equals(p.get("owner_id"))) throw error(403);
    String status=sql.queryForObject("SELECT status FROM project_members WHERE project_id=? AND account_id=?",String.class,id,actor);
    if (!status.equals(response.status())) { if (!status.equals("INVITED")) throw error(409); sql.update("UPDATE project_members SET status=? WHERE project_id=? AND account_id=?",response.status(),id,actor); }
+   return view(p,actor);
+  });
+ }
+ @PutMapping("/{id}") Project edit(@PathVariable UUID id,@Valid @RequestBody Edit edit,Authentication auth) {
+  UUID actor=collaboration.owner(auth);
+  return transaction.execute(s->{
+   var p=access(id,actor,true);
+   if (((Number)p.get("revision")).longValue()!=edit.revision()) throw error(409);
+   sql.update("UPDATE projects SET name=?,description=?,stage=?,revision=revision+1 WHERE id=?",edit.name().strip(),edit.description().strip(),edit.stage(),id);
+   return view(access(id,actor,true),actor);
+  });
+ }
+ @PostMapping("/{id}/leave") @ResponseStatus(HttpStatus.NO_CONTENT) void leave(@PathVariable UUID id,Authentication auth) {
+  UUID actor=collaboration.owner(auth);
+  transaction.executeWithoutResult(s->{
+   var p=access(id,actor,false); if (actor.equals(p.get("owner_id"))) throw error(403);
+   sql.update("UPDATE project_members SET status='DECLINED',ended_reason='LEFT' WHERE project_id=? AND account_id=?",id,actor);
+  });
+ }
+ @PostMapping("/{id}/members/{member}/remove") Project remove(@PathVariable UUID id,@PathVariable UUID member,Authentication auth) {
+  UUID actor=collaboration.owner(auth);
+  return transaction.execute(s->{
+   var p=access(id,actor,true); if (actor.equals(member)) throw error(400);
+   if (sql.queryForObject("SELECT COUNT(*) FROM project_members WHERE project_id=? AND account_id=?",Long.class,id,member)==0) throw error(404);
+   sql.update("UPDATE project_members SET status='DECLINED',ended_reason='REMOVED' WHERE project_id=? AND account_id=? AND status IN ('INVITED','ACCEPTED')",id,member);
    return view(p,actor);
   });
  }

@@ -36,7 +36,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-Current local checks pass: 34 Java tests, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+The full 34-test Java suite passed at the saved-project milestone; the updated 15-test collaboration suite passes with project management, 18 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -66,4 +66,4 @@ Like or pass saves your choice. Likes require both profiles to be discoverable, 
 
 This milestone has not added live push notifications, read receipts, attachments, reporting/moderation, or encryption beyond future HTTPS transport. Local H2 is verified; PostgreSQL deployment verification remains release work.
 
-Real projects are private saved drafts with a name, description, and stage. Owners can invite active mutual matches; invited people accept or decline in Projects & teams. Accepted teammates remain on the project if the original match ends. Project editing, removal/leave controls, and automatic real-team ranking are follow-up work.
+Real projects are private saved drafts with a name, description, and stage. Owners can invite active mutual matches; invited people accept or decline in Projects & teams. Accepted teammates remain on the project if the original match ends. Owners can edit project details and remove teammates; members can leave. Automatic real-team ranking remains follow-up work.

@@ -185,4 +185,36 @@ class CollaborationTest {
   http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Overflow"))).andExpect(status().isTooManyRequests());
   http.perform(post("/api/projects").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID()," "))).andExpect(status().isBadRequest());
  }
+ @Test void projectEditsUseOwnerAuthorizationAndRejectStaleVersions() throws Exception {
+  var saved=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Original"))).andReturn();
+  String id=json.readTree(saved.getResponse().getContentAsString()).get("id").asText();
+  String edits="{\"name\":\"Updated\",\"description\":\"Build a prototype\",\"stage\":\"Prototype\",\"revision\":0}";
+  http.perform(put("/api/projects/"+id).with(user(a.email)).contentType(MediaType.APPLICATION_JSON).content(edits)).andExpect(status().isForbidden());
+  http.perform(put("/api/projects/"+id).with(user(outside.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(edits)).andExpect(status().isNotFound());
+  http.perform(put("/api/projects/"+id).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(edits)).andExpect(jsonPath("$.name").value("Updated")).andExpect(jsonPath("$.revision").value(1));
+  http.perform(put("/api/projects/"+id).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(edits)).andExpect(status().isConflict());
+  http.perform(get("/api/projects").with(user(a.email))).andExpect(jsonPath("$[0].stage").value("Prototype"));
+ }
+ @Test void leavingAndRemovalEndProjectAccessAndCannotRestoreMembership() throws Exception {
+  UUID match=match();
+  var saved=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Team"))).andReturn();
+  String id=json.readTree(saved.getResponse().getContentAsString()).get("id").asText(), base="/api/projects/"+id;
+  http.perform(post(base+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"matchId\":\""+match+"\"}")).andExpect(status().isOk());
+  http.perform(post(base+"/leave").with(user(a.email)).with(csrf())).andExpect(status().isForbidden());
+  http.perform(post(base+"/leave").with(user(outside.email)).with(csrf())).andExpect(status().isNotFound());
+  http.perform(post(base+"/members/"+b.id+"/remove").with(user(b.email)).with(csrf())).andExpect(status().isNotFound());
+  http.perform(post(base+"/members/"+a.id+"/remove").with(user(a.email)).with(csrf())).andExpect(status().isBadRequest());
+  http.perform(post(base+"/members/"+b.id+"/remove").with(user(a.email)).with(csrf())).andExpect(jsonPath("$.members[1].status").value("REMOVED"));
+  http.perform(post(base+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isNotFound());
+  http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$.length()").value(0));
+  http.perform(post(base+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"matchId\":\""+match+"\"}")).andExpect(status().isConflict());
+  var second=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Second"))).andReturn();
+  base="/api/projects/"+json.readTree(second.getResponse().getContentAsString()).get("id").asText();
+  http.perform(post(base+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"matchId\":\""+match+"\"}")).andExpect(status().isOk());
+  http.perform(post(base+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isOk());
+  http.perform(post(base+"/leave").with(user(b.email))).andExpect(status().isForbidden());
+  http.perform(post(base+"/leave").with(user(b.email)).with(csrf())).andExpect(status().isNoContent());
+  http.perform(post(base+"/leave").with(user(b.email)).with(csrf())).andExpect(status().isNotFound());
+  http.perform(get("/api/projects").with(user(b.email))).andExpect(jsonPath("$.length()").value(0));
+ }
 }

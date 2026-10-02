@@ -1,0 +1,2 @@
+ALTER TABLE projects ADD COLUMN revision BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE project_members ADD COLUMN ended_reason VARCHAR(16);
