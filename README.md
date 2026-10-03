@@ -36,7 +36,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-Current verification: the full 42-test Java suite passes, including safety and account export. The 22 Python tests passed at the description milestone and three additional evaluation tests passed. Frontend state tests, lint, and production build have passed. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current verification: the full 47-test Java suite passes, including safety and account export. The 22 Python tests passed at the description milestone and three additional evaluation tests passed. Frontend state tests, lint, and production build have passed. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -62,9 +62,9 @@ After signing in and saving a profile, choose **Discover people**. Profiles rema
 
 ### Real matches and conversations
 
-Like or pass saves your choice. Likes require both profiles to be discoverable, compatible intents, and a freshly checked score above 50%. Only two genuine reciprocal likes create a match. Real conversations have no automated replies. Messages persist in the local database, are accessible only to the two active members, and refresh manually. Each send includes a client request UUID so retries do not create duplicates. Conversations page in batches of 50; sending is limited to 30 new messages per user per minute. Unmatching closes access for both members and prevents further contact for that pair in this preview; records remain stored, pending retention/deletion controls. Hiding discovery visibility does not close existing matches.
+Like or pass saves your choice. Likes require both profiles to be discoverable, compatible intents, and a freshly checked score above 50%. Only two genuine reciprocal likes create a match. Real conversations have no automated replies. Messages persist in the local database, are accessible only to the two active members, and refresh every 15 seconds while the conversation is visible. Each send includes a client request UUID so retries do not create duplicates. Conversations page in batches of 50; sending is limited to 30 new messages per user per minute. Unmatching closes access for both members and prevents further contact for that pair in this preview; records remain stored, subject to future retention policies. Hiding discovery visibility does not close existing matches.
 
-This milestone has not added live push notifications, read receipts, attachments, reporting/moderation, or encryption beyond future HTTPS transport. Local H2 is verified; PostgreSQL deployment verification remains release work.
+This milestone has not added live push notifications, read receipts, attachments, staffed moderation, or encryption beyond future HTTPS transport. Local H2 is verified; PostgreSQL deployment verification remains release work.
 
 Real projects are private saved drafts with a name, description, and stage. Owners can invite active mutual matches; invited people accept or decline in Projects & teams. Accepted teammates remain on the project if the original match ends. Owners can edit project details and remove teammates; members can leave. Automatic real-team ranking remains follow-up work.
 
@@ -72,6 +72,16 @@ Onboarding can suggest offered/needed skills from English descriptions. Review e
 
 Offline model evaluation now trains and compares a logistic baseline with weighted and random ranking on profile-disjoint synthetic splits. The learned model underperformed (held-out nDCG@5 0.000 versus weighted 0.219); the live scorer is unchanged. Results are in ai/artifacts/synthetic-ranking-report.json. Three additional evaluation correctness tests pass. These metrics describe synthetic labels, not user outcomes.
 
-Signed-in users can choose Download my data to download their saved profile and activity as JSON. Exports include retained history but exclude credentials and other users' private content. This is data access, not account deletion; deletion and retention policies remain release work.
+Signed-in users can choose Download my data to download their saved profile and activity as JSON. Exports include retained history but exclude credentials and other users' private content. Account settings also support password-confirmed permanent deletion; retention policies remain release work.
 
-Real conversations now offer blocking and report recording. Blocking prevents either-direction discovery and closes contact through that match. Reports are privately retained, retry-safe, and participant-scoped; the local preview has no staffed review or notifications. Shared projects require separate leave/remove actions. Unblocking and moderation operations are still release work.
+Real conversations now offer blocking and report recording. Blocking prevents either-direction discovery and closes contact through that match. Reports are privately retained, retry-safe, and participant-scoped; the local preview has no staffed review or notifications. Shared projects require separate leave/remove actions. Settings allow removing your own blocks; closed matches stay closed. Moderation operations remain release work.
+
+### Connected workspace features
+
+Saved profiles open a dashboard with conversation previews and unread counts, upcoming coffee invitations, and projects/invitations. Dashboard refreshes every 20 seconds while visible; conversations poll every 15 seconds. Opening a conversation advances your private read cursor. There are no push notifications or shared read receipts.
+
+Full profile pages show public collaboration fields, an optional self-provided GitHub link, and editable public project history. GitHub links are not OAuth connections or verified ownership. Private project records are not published as profile history. Hidden profiles remain accessible to active matches; blocked profiles are denied.
+
+Projects support tasks and milestones, optional due dates, completion toggles, and progress. Owners and accepted members can write; pending invitees can only view. Revision checks reject stale completion updates.
+
+Account settings include discovery visibility, public profile details, blocked users, recovery keys, and permanent account deletion. Generate a private recovery key after confirming your password and save it securely: it is shown once, stored only as a hash, replaces any previous key, and can reset a password once. Recovery invalidates existing sessions on their next request. Email recovery is not provided. Deletion requires your password and typed confirmation, and cascades account-related records, including owned projects and related conversations. Download your data first if needed.

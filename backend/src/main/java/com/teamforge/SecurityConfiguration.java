@@ -17,15 +17,16 @@ class SecurityConfiguration {
   var provider = new DaoAuthenticationProvider(users); provider.setPasswordEncoder(passwords);
   return new ProviderManager(provider);
  }
- @Bean SecurityFilterChain security(HttpSecurity http) throws Exception {
+ @Bean SecurityFilterChain security(HttpSecurity http,AccountRepository accounts) throws Exception {
   http.authorizeHttpRequests(auth -> auth
     .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
-    .requestMatchers("/api/auth/csrf", "/api/auth/signup", "/api/auth/login", "/api/demo/**", "/api/onboarding/validate", "/api/onboarding/skills", "/actuator/health", "/actuator/health/**").permitAll()
-    .requestMatchers("/api/auth/me", "/api/account/export", "/api/safety/**", "/api/profiles/me", "/api/profiles/me/visibility", "/api/discovery/**", "/api/matches/**", "/api/projects", "/api/projects/**").authenticated().anyRequest().denyAll())
+    .requestMatchers("/api/auth/csrf", "/api/auth/signup", "/api/auth/login", "/api/auth/recover", "/api/demo/**", "/api/onboarding/validate", "/api/onboarding/skills", "/actuator/health", "/actuator/health/**").permitAll()
+    .requestMatchers("/api/auth/me", "/api/dashboard", "/api/people/**", "/api/profiles/me/details", "/api/account/**", "/api/account/export", "/api/safety/**", "/api/profiles/me", "/api/profiles/me/visibility", "/api/discovery/**", "/api/matches/**", "/api/projects", "/api/projects/**").authenticated().anyRequest().denyAll())
    .csrf(csrf -> csrf.ignoringRequestMatchers("/api/demo/**", "/api/onboarding/validate", "/api/onboarding/skills"))
    .formLogin(form -> form.disable()).httpBasic(basic -> basic.disable())
    .exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, ex) -> response.sendError(401)))
    .logout(logout -> logout.logoutUrl("/api/auth/logout").deleteCookies("JSESSIONID").logoutSuccessHandler((request, response, auth) -> response.setStatus(204)));
+  http.addFilterAfter(new CredentialSessionFilter(accounts),org.springframework.security.web.context.SecurityContextHolderFilter.class);
   return http.build();
  }
 }

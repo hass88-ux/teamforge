@@ -268,4 +268,68 @@ class CollaborationTest {
   http.perform(get("/api/account/export").with(user(a.email))).andExpect(jsonPath("$.reports.length()").value(1));
   http.perform(get("/api/account/export").with(user(b.email))).andExpect(jsonPath("$.reports.length()").value(0));
  }
+ @Autowired org.springframework.security.crypto.password.PasswordEncoder passwords;
+ @Test void dashboardTracksUnreadMessagesWithMonotonicPrivateCursors() throws Exception {
+  UUID id=match();
+  var sent=http.perform(post("/api/matches/"+id+"/messages").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(message(UUID.randomUUID(),"Dashboard preview"))).andReturn();
+  long sequence=json.readTree(sent.getResponse().getContentAsString()).get("sequence").asLong();
+  http.perform(get("/api/dashboard").with(user(b.email))).andExpect(jsonPath("$.matches[0].unreadCount").value(1)).andExpect(jsonPath("$.matches[0].lastMessage").value("Dashboard preview"));
+  String path="/api/matches/"+id+"/read";
+  http.perform(post(path).with(user(outside.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"sequence\":0}")).andExpect(status().isNotFound());
+  http.perform(post(path).with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"sequence\":"+(sequence+100)+"}")).andExpect(status().isBadRequest());
+  for (long cursor:new long[]{sequence,0}) http.perform(post(path).with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"sequence\":"+cursor+"}")).andExpect(status().isNoContent());
+  http.perform(get("/api/dashboard").with(user(b.email))).andExpect(jsonPath("$.matches[0].unreadCount").value(0));
+ }
+ @Test void publicProfilesRespectPrivacyAndGithubLinksAreRestricted() throws Exception {
+  http.perform(put("/api/profiles/me/visibility").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"discoverable\":false}")).andExpect(status().isOk());
+  http.perform(get("/api/people/"+b.id).with(user(a.email))).andExpect(status().isNotFound());
+  http.perform(put("/api/profiles/me/details").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"githubUrl\":\"javascript:alert(1)\",\"projectHistory\":\"\"}")).andExpect(status().isBadRequest());
+  http.perform(put("/api/profiles/me/details").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"githubUrl\":\"https://github.com/example\",\"projectHistory\":\"Built a learning app\"}")).andExpect(status().isOk());
+  http.perform(put("/api/profiles/me/visibility").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"discoverable\":true}")).andExpect(status().isOk());
+  var visible=http.perform(get("/api/people/"+b.id).with(user(a.email))).andExpect(jsonPath("$.details.githubUrl").value("https://github.com/example")).andReturn();
+  assertThat(visible.getResponse().getContentAsString()).doesNotContain(b.email,"timezone","availability","password");
+  http.perform(post("/api/safety/blocks").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"targetId\":\""+b.id+"\"}")).andExpect(status().isNoContent());
+  http.perform(get("/api/people/"+b.id).with(user(a.email))).andExpect(status().isNotFound());
+  http.perform(post("/api/account/unblock").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"targetId\":\""+b.id+"\"}")).andExpect(status().isNoContent());
+  http.perform(get("/api/people/"+b.id).with(user(a.email))).andExpect(status().isOk());
+ }
+ @Test void tasksRequireAcceptedMembershipAndUseRevisionChecks() throws Exception {
+  UUID match=match();
+  var saved=http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Task team"))).andReturn();
+  String id=json.readTree(saved.getResponse().getContentAsString()).get("id").asText(), path="/api/projects/"+id;
+  http.perform(post(path+"/members").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"matchId\":\""+match+"\"}")).andExpect(status().isOk());
+  String draft="{\"clientId\":\""+UUID.randomUUID()+"\",\"title\":\"Ship prototype\",\"kind\":\"MILESTONE\",\"dueDate\":\"2026-10-10\"}";
+  http.perform(post(path+"/tasks").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(status().isForbidden());
+  http.perform(get(path+"/tasks").with(user(outside.email))).andExpect(status().isNotFound());
+  var task=http.perform(post(path+"/tasks").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(status().isOk()).andReturn();
+  String taskId=json.readTree(task.getResponse().getContentAsString()).get("id").asText();
+  http.perform(post(path+"/tasks").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(draft)).andExpect(jsonPath("$.id").value(taskId));
+  http.perform(post(path+"/response").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"ACCEPTED\"}")).andExpect(status().isOk());
+  String update="{\"done\":true,\"revision\":0}";
+  http.perform(put(path+"/tasks/"+taskId).with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(update)).andExpect(jsonPath("$.done").value(true));
+  http.perform(put(path+"/tasks/"+taskId).with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(update)).andExpect(status().isConflict());
+  http.perform(post(path+"/leave").with(user(b.email)).with(csrf())).andExpect(status().isNoContent());
+  http.perform(get(path+"/tasks").with(user(b.email))).andExpect(status().isNotFound());
+ }
+ @Test void recoveryKeyIsSingleUseAndRevokesOldCredentialSessions() throws Exception {
+  String original="My original password 42!", changed="My new password 42!", hash=passwords.encode(original);
+  sql.update("UPDATE accounts SET password_hash=? WHERE id=?",hash,a.id);
+  var oldSession=new org.springframework.mock.web.MockHttpSession(); oldSession.setAttribute("accountCredential",a.id+":"+hash);
+  var generated=http.perform(post("/api/account/recovery-key").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("password",original)))).andExpect(status().isOk()).andReturn();
+  String key=json.readTree(generated.getResponse().getContentAsString()).get("key").asText();
+  assertThat(sql.queryForObject("SELECT key_hash FROM recovery_keys WHERE account_id=?",String.class,a.id)).isNotEqualTo(key);
+  String body=json.writeValueAsString(Map.of("email",a.email,"key",key,"password",changed));
+  http.perform(post("/api/auth/recover").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isNoContent());
+  http.perform(post("/api/auth/recover").with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+  http.perform(get("/api/auth/me").with(user(a.email)).session(oldSession)).andExpect(status().isUnauthorized());
+  assertThat(passwords.matches(changed,sql.queryForObject("SELECT password_hash FROM accounts WHERE id=?",String.class,a.id))).isTrue();
+ }
+ @Test void accountDeletionRequiresPasswordAndCascadesOwnedProjects() throws Exception {
+  String password="Delete test password 42!"; sql.update("UPDATE accounts SET password_hash=? WHERE id=?",passwords.encode(password),a.id);
+  http.perform(post("/api/projects").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(project(UUID.randomUUID(),"Owned"))).andExpect(status().isOk());
+  http.perform(post("/api/account/delete").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"wrong\"}")).andExpect(status().isForbidden());
+  http.perform(post("/api/account/delete").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("password",password)))).andExpect(status().isNoContent());
+  assertThat(accounts.findById(a.id)).isEmpty(); assertThat(sql.queryForObject("SELECT COUNT(*) FROM projects WHERE owner_id=?",Long.class,a.id)).isEqualTo(0);
+  assertThat(accounts.findById(b.id)).isPresent();
+ }
 }

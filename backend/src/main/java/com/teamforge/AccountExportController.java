@@ -36,6 +36,8 @@ class AccountExportController {
   result.put("teamMemberships",sql.queryForList("SELECT project_id,status,ended_reason FROM project_members WHERE account_id=? ORDER BY project_id",actor));
   result.put("blocks",sql.queryForList("SELECT target_id,created_at FROM account_blocks WHERE actor_id=? ORDER BY created_at,target_id",actor));
   result.put("reports",sql.queryForList("SELECT id,match_id,reason,details,created_at FROM safety_reports WHERE reporter_id=? ORDER BY created_at,id",actor));
+  result.put("publicProfileDetails",sql.queryForList("SELECT github_url,project_history FROM profile_details WHERE account_id=?",actor));
+  result.put("authoredTasks",sql.queryForList("SELECT id,project_id,title,kind,due_date,done,revision FROM project_tasks WHERE creator_id=? ORDER BY project_id,id",actor));
   result.put("scope","Your account, saved profile, choices, match metadata, authored messages/invitations, owned projects, and membership history. Other members' profiles, messages, and rosters are excluded. Retained history includes ended matches and memberships.");
   return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).cacheControl(CacheControl.noStore())
    .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=teamforge-account-data.json")

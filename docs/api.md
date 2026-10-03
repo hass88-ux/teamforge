@@ -39,7 +39,7 @@ CSRF is required on signup, login, logout, and profile writes. Invalid fields re
 - GET `/api/matches`: up to 100 newest active matches belonging to the caller, with the other member's name, type, intent, score at matching, and creation time. No email, credentials, or private schedule fields.
 - GET `/api/matches/{id}/messages?after=0`: active members only; up to 50 messages ordered by sequence, plus `hasMore` and `nextAfter`. Missing, closed, or unauthorized conversations all return 404.
 - POST `/api/matches/{id}/messages`: `{ clientId: UUID, text: string }`, authenticated + CSRF and active membership; nonblank, at most 1000 characters. Same user/match/client ID repeats return the original message; a changed body with that ID returns 409. At most 30 new messages per sender per minute (429 thereafter). The server assigns sender, sequence, and timestamp.
-- DELETE `/api/matches/{id}`: authenticated + CSRF and active membership, 204. Closes the pair, removes it from active lists, and prevents all further conversation access/contact. Stored records remain; retention/deletion controls are pending.
+- DELETE `/api/matches/{id}`: authenticated + CSRF and active membership, 204. Closes the pair, removes it from active lists, and prevents all further conversation access/contact. Stored records remain; retention policy is pending.
 
 ## Matched coffee invitations
 
@@ -64,3 +64,13 @@ GET /api/account/export requires authentication and returns an attachment named 
 Authenticated CSRF-protected POST /api/safety/blocks accepts targetId, rejects self-blocks, and persists an idempotent directional block. Either direction excludes both profiles from discovery and stops new likes. Blocking closes any active match, ending messages, coffee invitations, and invitations through that match. Unblocking is not available yet. Shared project memberships are not removed automatically; use project leave/removal controls.
 
 POST /api/safety/reports accepts clientId, matchId, reason (Harassment, Spam, Impersonation, Other), and details (up to 1000 characters). Only a participant in that active or ended match can record a report. Identical client-ID retries return the same receipt; changed payload returns 409. A reporter may create ten reports per rolling 24 hours; excess returns 429. Status RECORDED means stored, not reviewed. There is no staffed moderation queue or external notification in the local preview. Reports do not automatically block. Account export includes only the caller's authored reports and blocks. No user-facing report-list endpoint shares reports with the reported person.
+
+## Workspace additions
+
+GET /api/dashboard returns caller-scoped matches, projects and upcoming coffee invitations. Match summaries include latest message previews and incoming unread counts. POST /api/matches/{id}/read accepts sequence, requires active membership, rejects future sequences, and advances monotonically.
+
+GET/PUT /api/profiles/me/details reads/writes githubUrl and projectHistory. GET /api/people/{id} returns allowlisted public profile fields and these details for visible profiles, self, or active matches; blocks deny access. GitHub URLs accept only HTTPS GitHub profile paths and are self-provided, unverified links.
+
+GET/POST /api/projects/{id}/tasks reads/adds bounded task/milestone items. POST takes clientId, title, kind and optional dueDate; retries are idempotent. PUT /api/projects/{id}/tasks/{task} takes done and revision; stale revisions return 409. Owners and accepted members can write; invitees only read.
+
+GET /api/account/blocks lists the caller's blocks. POST /api/account/unblock takes targetId and removes only their block, without reopening matches. POST /api/account/recovery-key requires password and returns a one-time-visible private key. POST /api/auth/recover takes email, key and new password; consumes the key and revokes prior credentials. POST /api/account/delete requires password and cascades account-related data. Mutations require CSRF; recovery/deletion/key generation share authentication throttling. Export also includes public profile details and caller-created project tasks, excluding recovery secrets.

@@ -26,7 +26,7 @@ class ProjectController {
  record Member(UUID id,String displayName,String status) {}
  record Project(UUID id,boolean owned,String name,String description,String stage,long revision,String yourStatus,List<Member> members) {}
  private ResponseStatusException error(int status) { return new ResponseStatusException(HttpStatus.valueOf(status)); }
- private Map<String,Object> access(UUID id,UUID actor,boolean owner) {
+ Map<String,Object> access(UUID id,UUID actor,boolean owner) {
   var rows=sql.queryForList("SELECT * FROM projects WHERE id=? FOR UPDATE",id);
   if (rows.isEmpty()) throw error(404);
   var p=rows.getFirst();

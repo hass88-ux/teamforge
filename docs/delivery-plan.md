@@ -27,12 +27,12 @@ Use focused changes and targeted tests. Avoid unnecessary model inference, redun
 
 ## Current milestone and next priorities
 
-Local demo, accounts, profile persistence, and opt-in real discovery are implemented. Persistent likes/passes, mutual matches, and matched-user messaging are implemented. Real coffee invitations are implemented. Real saved projects and consent-based team invitations are implemented. Project editing and leave/removal controls are implemented. Next: optional GitHub enrichment; a deployable beta with PostgreSQL and HTTPS; recovery, abuse controls, deletion/privacy notice; responsive/accessibility polish and honest evaluation. These remain release work, not completed features.
+Local demo, accounts, profile persistence, and opt-in real discovery are implemented. Persistent likes/passes, mutual matches, and matched-user messaging are implemented. Real coffee invitations are implemented. Real saved projects and consent-based team invitations are implemented. Project editing and leave/removal controls are implemented. Next: optional GitHub enrichment; a deployable beta with PostgreSQL and HTTPS; email recovery, moderation operations, privacy notice; responsive/accessibility polish and honest evaluation. These remain release work, not completed features.
 
 Description-based skill suggestions are implemented as a reviewed English rule-based baseline. Next intelligence work: measured model evaluation and optional GitHub enrichment; no trained-model claim is made.
 
 Offline synthetic model evaluation is implemented with profile-disjoint train/validation/test groups. The trained logistic baseline failed to improve held-out ranking and was not promoted. Remaining intelligence work needs better training data and fresh evaluation before production adoption.
 
-Account data download is implemented with owner-only fields, no-cache responses, and isolation coverage. Account recovery, abuse controls, retention/deletion, and public hosting remain release work.
+Account data download is implemented with owner-only fields, no-cache responses, and isolation coverage. Recovery keys and account deletion are implemented. Email recovery, moderation operations, retention policy, and public hosting remain release work.
 
-Blocking and private report recording are implemented. Public-release safety still needs a functioning moderation workflow, unblocking/account recovery, retention/deletion, and production deployment verification.
+Blocking and private report recording are implemented. Public-release safety still needs a functioning moderation workflow, email recovery, retention policy, and production deployment verification.

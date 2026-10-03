@@ -28,7 +28,7 @@ class CollaborationController {
  record Decision(@NotNull UUID candidateId,@NotBlank @Pattern(regexp="LIKE|PASS") String decision) {}
  record MessageDraft(@NotNull UUID clientId,@NotBlank @Size(max=1000) String text) {}
  record Message(long sequence,UUID clientId,boolean fromYou,String text,Instant sentAt) {}
- record MatchView(UUID id,UUID partnerId,String displayName,String entityType,String matchingIntent,int compatibility,Instant createdAt) {}
+ record MatchView(UUID id,UUID partnerId,String displayName,String entityType,String matchingIntent,int compatibility,Instant createdAt,String lastMessage,long unreadCount) {}
  UUID owner(Authentication auth) { return accounts.findByEmail(auth.getName()).orElseThrow(() -> error(401)).id; }
  private ResponseStatusException error(int status) { return new ResponseStatusException(HttpStatus.valueOf(status)); }
  private OnboardingController.ProfileDraft draft(StoredProfile profile) {
@@ -88,11 +88,14 @@ class CollaborationController {
  @GetMapping("/api/matches")
  List<MatchView> matches(Authentication auth) {
   UUID actor=owner(auth);
-  return sql.query("SELECT id,member_a,member_b,compatibility,created_at FROM collaboration_matches WHERE closed_at IS NULL AND (member_a=? OR member_b=?) ORDER BY created_at DESC,id LIMIT 100",(row,n) -> {
+  return transaction.execute(state -> sql.query("SELECT id,member_a,member_b,compatibility,created_at FROM collaboration_matches WHERE closed_at IS NULL AND (member_a=? OR member_b=?) ORDER BY created_at DESC,id LIMIT 100 FOR UPDATE",(row,n) -> {
    UUID other=actor.equals(row.getObject("member_a",UUID.class))?row.getObject("member_b",UUID.class):row.getObject("member_a",UUID.class);
    var profile=draft(profiles.findById(other).orElseThrow(() -> error(404)));
-   return new MatchView(row.getObject("id",UUID.class),other,profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant());
-  },actor,actor);
+   UUID match=row.getObject("id",UUID.class);
+   var preview=sql.query("SELECT body FROM collaboration_messages WHERE match_id=? ORDER BY sequence_id DESC LIMIT 1",(r,i)->r.getString(1),match);
+   long unread=sql.queryForObject("SELECT COUNT(*) FROM collaboration_messages WHERE match_id=? AND sender_id<>? AND sequence_id>COALESCE((SELECT last_sequence FROM match_reads WHERE match_id=? AND account_id=?),0)",Long.class,match,actor,match,actor);
+   return new MatchView(match,other,profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant(),preview.isEmpty()?"":preview.getFirst(),unread);
+  },actor,actor));
  }
  @GetMapping("/api/matches/{match}/messages")
  Map<String,Object> messages(@PathVariable UUID match,@RequestParam(defaultValue="0") long after,Authentication auth) {
@@ -101,6 +104,17 @@ class CollaborationController {
   var rows=sql.query("SELECT sequence_id,client_id,sender_id,body,created_at FROM collaboration_messages WHERE match_id=? AND sequence_id>? ORDER BY sequence_id LIMIT 51",(row,n) -> new Message(row.getLong("sequence_id"),row.getObject("client_id",UUID.class),actor.equals(row.getObject("sender_id",UUID.class)),row.getString("body"),row.getTimestamp("created_at").toInstant()),match,after);
   boolean more=rows.size()>50; var page=rows.stream().limit(50).toList();
   return Map.of("messages",page,"hasMore",more,"nextAfter",page.isEmpty()?after:page.getLast().sequence());
+  });
+ }
+ record ReadCursor(@Min(0) long sequence) {}
+ @PostMapping("/api/matches/{match}/read") @ResponseStatus(HttpStatus.NO_CONTENT)
+ void read(@PathVariable UUID match,@Valid @RequestBody ReadCursor cursor,Authentication auth) {
+  UUID actor=owner(auth);
+  transaction.executeWithoutResult(s->{ member(match,actor,true);
+   long latest=sql.queryForObject("SELECT COALESCE(MAX(sequence_id),0) FROM collaboration_messages WHERE match_id=?",Long.class,match);
+   if (cursor.sequence()>latest) throw error(400);
+   if (sql.queryForObject("SELECT COUNT(*) FROM match_reads WHERE match_id=? AND account_id=?",Long.class,match,actor)==0) sql.update("INSERT INTO match_reads(match_id,account_id,last_sequence) VALUES(?,?,?)",match,actor,cursor.sequence());
+   else sql.update("UPDATE match_reads SET last_sequence=? WHERE match_id=? AND account_id=? AND last_sequence<?",cursor.sequence(),match,actor,cursor.sequence());
   });
  }
  @PostMapping("/api/matches/{match}/messages")

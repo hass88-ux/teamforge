@@ -15,7 +15,7 @@ Profiles survive reload and backend restart. In-memory login sessions do not sur
 
 Flyway V2 adds `profiles.discoverable`, default false, so existing saved accounts stay private. Visibility is owned by the same account UUID and survives profile edits. No demo record is inserted into these tables.
 
-Flyway V3 adds `profile_decisions` (actor/target composite key), `collaboration_matches` (unique canonical member pair, score at match, creation/closure timestamps), and `collaboration_messages` (database sequence, match, server-derived sender, client request UUID, bounded body, timestamp). Foreign keys bind these records to real accounts; demo never writes them. Closed matches retain history but the application denies access and future contact. Database-backed account deletion would cascade, but no user-facing deletion endpoint exists yet.
+Flyway V3 adds `profile_decisions` (actor/target composite key), `collaboration_matches` (unique canonical member pair, score at match, creation/closure timestamps), and `collaboration_messages` (database sequence, match, server-derived sender, client request UUID, bounded body, timestamp). Foreign keys bind these records to real accounts; demo never writes them. Closed matches retain history but the application denies access and future contact. Database-backed account deletion would cascade, and a password-confirmed deletion endpoint now exists.
 
 Flyway V4 adds `coffee_proposals`, scoped to a real match and proposer, with unique per-proposer client request IDs, UTC start time, IANA timezone, kind, note, status, and creation time. Match locking serializes proposals and responses against unmatching. These records are retained with the conversation.
 
@@ -24,3 +24,5 @@ Flyway V5 adds projects with owner, idempotency client ID, name, description, st
 V6 adds an optimistic revision to project details and an ended_reason to member history. Leaving/removal sets underlying status DECLINED to revoke access, with LEFT/REMOVED presented in the roster. Records remain stored; no destructive deletion is involved. All roster reads, edits, and membership changes serialize on the project row.
 
 V7 adds directional account_blocks and private safety_reports. Block uniqueness is actor/target; report uniqueness is reporter/client UUID. Reports retain match reference, reason, details and creation time. Account/match foreign keys cascade. Blocking closes a match without deleting messages or proposals. The reporter's own records appear in export; other people's reports do not.
+
+V8 adds private per-member match read cursors, optional public profile details, revision-controlled project tasks/milestones, and hashed single-use recovery keys. All are bound by cascading foreign keys.

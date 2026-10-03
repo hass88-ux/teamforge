@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { accountRequest } from './accountApi'
 import './DemoConversation.css'
 import CoffeeInvitations from './CoffeeInvitations'
 import SafetyControls from './SafetyControls'
+import PublicProfile from './PublicProfile'
 
-export type RealMatch = { id: string; partnerId: string; displayName: string; entityType: string; matchingIntent: string; compatibility: number }
+export type RealMatch = { id: string; partnerId: string; lastMessage?: string; unreadCount?: number; displayName: string; entityType: string; matchingIntent: string; compatibility: number }
 type Message = { sequence: number; clientId: string; fromYou: boolean; text: string; sentAt: string }
 export default function RealConversation({ match, onBack, onUnmatched }: { match: RealMatch; onBack: () => void; onUnmatched: () => void }) {
+  const [viewProfile, setViewProfile] = useState(false)
+  const polling = useRef(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -17,25 +20,27 @@ export default function RealConversation({ match, onBack, onUnmatched }: { match
   const [confirmEnd, setConfirmEnd] = useState(false)
   const pending = useRef<{ clientId: string; text: string } | null>(null)
   const cursor = useRef(0)
-  async function load() {
+  const load = useCallback(async () => {
+    if (polling.current) return; polling.current = true
     setLoading(true); setError('')
     try {
       const response = await accountRequest(`/api/matches/${match.id}/messages?after=${cursor.current}`)
       if (!response.ok) throw new Error(response.status === 404 ? 'This conversation is no longer available.' : response.status === 401 ? 'Your session expired. Please log in again.' : 'Cannot load messages. Please try again.')
       const result = await response.json()
       setMessages(current => [...current, ...result.messages.filter((message: Message) => !current.some(item => item.sequence === message.sequence))].sort((a, b) => a.sequence - b.sequence))
-      cursor.current = result.nextAfter; setHasMore(result.hasMore)
+      cursor.current = result.nextAfter; setHasMore(result.hasMore); if (document.visibilityState === 'visible') void accountRequest(`/api/matches/${match.id}/read`, 'POST', { sequence: result.nextAfter }).catch(() => {})
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }
-    finally { setLoading(false) }
-  }
+    finally { setLoading(false); polling.current = false }
+  }, [match.id])
   useEffect(() => {
     let active = true
     accountRequest(`/api/matches/${match.id}/messages?after=0`).then(async response => {
       if (!response.ok) throw new Error(response.status === 404 ? 'This conversation is no longer available.' : 'Cannot load messages. Please try again.')
       return response.json()
-    }).then(result => { if (active) { setMessages(result.messages); cursor.current = result.nextAfter; setHasMore(result.hasMore) } }).catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }).finally(() => { if (active) setLoading(false) })
+    }).then(result => { if (active) { setMessages(result.messages); cursor.current = result.nextAfter; setHasMore(result.hasMore); if (document.visibilityState === 'visible') void accountRequest(`/api/matches/${match.id}/read`, 'POST', { sequence: result.nextAfter }).catch(() => {}) } }).catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [match.id])
+  useEffect(() => { const timer = window.setInterval(() => { if (!busy && !loading && !viewProfile && document.visibilityState === 'visible') void load() }, 15000); return () => clearInterval(timer) }, [busy, loading, viewProfile, load])
   async function send(event: FormEvent) {
     event.preventDefault()
     if (busy || !text.trim()) return
@@ -60,7 +65,8 @@ export default function RealConversation({ match, onBack, onUnmatched }: { match
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot reach your match.') }
     finally { setBusy(false) }
   }
-  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>Back to discovery</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><p className="note">Messages are saved to your conversation. Only the two matched members can access them. Refresh to check for new replies.</p>
+  if (viewProfile) return <PublicProfile id={match.partnerId} onBack={() => setViewProfile(false)}/>
+  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>Back to discovery</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><button className="text-button" onClick={() => setViewProfile(true)}>View collaborator profile</button><p className="note">Messages are saved to your conversation. Only the two matched members can access them. New replies refresh automatically every 15 seconds while this screen is visible; you can also refresh manually.</p>
     {error && <p className="error" role="alert">{error}</p>}
     <div className="message-list" role="log" aria-label="Conversation messages" aria-live="polite">{!loading && !messages.length && <p>Introduce yourself and share something you’d like to build.</p>}{messages.map(message => <article key={message.sequence} className={`message ${message.fromYou ? 'you' : 'received'}`}><strong>{message.fromYou ? 'You' : match.displayName}</strong><p>{message.text}</p><time dateTime={message.sentAt}>{new Date(message.sentAt).toLocaleString()}</time></article>)}</div>
     <button className="secondary" disabled={loading || busy} onClick={() => void load()}>{loading ? 'Loading…' : hasMore ? 'Load more messages' : 'Refresh messages'}</button>

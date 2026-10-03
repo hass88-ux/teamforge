@@ -7,3 +7,5 @@
 .swipe-card:focus-visible { outline: 3px solid #d8ff53; outline-offset: 5px; }
 .identity-badges { margin: 1rem 0; text-transform: capitalize; }
 .onboarding textarea { min-height: 110px; width: 100%; }
+
+.dashboard .summary-grid button{display:block;width:100%;margin:12px 0;text-align:left}.dashboard .summary-grid button p{margin:8px 0 0;overflow-wrap:anywhere}.account-strip{flex-wrap:wrap}.account-strip .actions{flex-wrap:wrap}.preview{overflow-wrap:anywhere}
