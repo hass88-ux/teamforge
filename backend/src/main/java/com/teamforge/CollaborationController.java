@@ -28,7 +28,7 @@ class CollaborationController {
  record Decision(@NotNull UUID candidateId,@NotBlank @Pattern(regexp="LIKE|PASS") String decision) {}
  record MessageDraft(@NotNull UUID clientId,@NotBlank @Size(max=1000) String text) {}
  record Message(long sequence,UUID clientId,boolean fromYou,String text,Instant sentAt) {}
- record MatchView(UUID id,String displayName,String entityType,String matchingIntent,int compatibility,Instant createdAt) {}
+ record MatchView(UUID id,UUID partnerId,String displayName,String entityType,String matchingIntent,int compatibility,Instant createdAt) {}
  UUID owner(Authentication auth) { return accounts.findByEmail(auth.getName()).orElseThrow(() -> error(401)).id; }
  private ResponseStatusException error(int status) { return new ResponseStatusException(HttpStatus.valueOf(status)); }
  private OnboardingController.ProfileDraft draft(StoredProfile profile) {
@@ -64,6 +64,7 @@ class CollaborationController {
    var ids=new ArrayList<>(List.of(actor,target)); ids.sort(Comparator.comparing(UUID::toString));
    // Serialize both directions in canonical order, including simultaneous likes.
    for (UUID id:ids) sql.queryForList("SELECT id FROM accounts WHERE id=? FOR UPDATE",id);
+   if (sql.queryForObject("SELECT COUNT(*) FROM account_blocks WHERE (actor_id=? AND target_id=?) OR (actor_id=? AND target_id=?)",Long.class,actor,target,target,actor)>0) throw error(404);
    for (UUID id:ids) {
     var locked=sql.queryForList("SELECT row_version,discoverable FROM profiles WHERE account_id=? FOR UPDATE",id);
     var snapshot=id.equals(actor)?own:other;
@@ -90,7 +91,7 @@ class CollaborationController {
   return sql.query("SELECT id,member_a,member_b,compatibility,created_at FROM collaboration_matches WHERE closed_at IS NULL AND (member_a=? OR member_b=?) ORDER BY created_at DESC,id LIMIT 100",(row,n) -> {
    UUID other=actor.equals(row.getObject("member_a",UUID.class))?row.getObject("member_b",UUID.class):row.getObject("member_a",UUID.class);
    var profile=draft(profiles.findById(other).orElseThrow(() -> error(404)));
-   return new MatchView(row.getObject("id",UUID.class),profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant());
+   return new MatchView(row.getObject("id",UUID.class),other,profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant());
   },actor,actor);
  }
  @GetMapping("/api/matches/{match}/messages")

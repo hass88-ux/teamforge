@@ -237,4 +237,35 @@ class CollaborationTest {
   assertThat(exported.getResponse().getContentAsString()).contains("My authored message","My project").doesNotContain("Other private message","Other private project",b.email,"password","hashed","JSESSIONID");
   http.perform(get("/api/account/export").with(user(outside.email))).andExpect(jsonPath("$.sentMessages.length()").value(0)).andExpect(jsonPath("$.matches.length()").value(0));
  }
+ @Autowired DecisionLookup decisions;
+ @Test void blockingPreventsDiscoveryReconnectMessagesAndInvitations() throws Exception {
+  UUID id=match(); String block="{\"targetId\":\""+b.id+"\"}";
+  http.perform(post("/api/safety/blocks").with(user(a.email)).contentType(MediaType.APPLICATION_JSON).content(block)).andExpect(status().isForbidden());
+  for (int i=0;i<2;i++) http.perform(post("/api/safety/blocks").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(block)).andExpect(status().isNoContent());
+  assertThat(decisions.targets(a.id)).contains(b.id); assertThat(decisions.targets(b.id)).contains(a.id);
+  http.perform(get("/api/matches").with(user(b.email))).andExpect(jsonPath("$.length()").value(0));
+  http.perform(get("/api/matches/"+id+"/messages").with(user(b.email))).andExpect(status().isNotFound());
+  http.perform(post("/api/matches/"+id+"/messages").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(message(UUID.randomUUID(),"Cannot contact"))).andExpect(status().isNotFound());
+  http.perform(get("/api/matches/"+id+"/proposals").with(user(a.email))).andExpect(status().isNotFound());
+  for (Account actor:List.of(a,b)) http.perform(post("/api/discovery/decisions").with(user(actor.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(vote(actor==a?b:a,"LIKE"))).andExpect(status().isConflict());
+  http.perform(post("/api/safety/blocks").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"targetId\":\""+a.id+"\"}")).andExpect(status().isBadRequest());
+ }
+ @Test void blockingBeforeMatchingRejectsLikesInBothDirections() throws Exception {
+  http.perform(post("/api/safety/blocks").with(user(b.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{\"targetId\":\""+a.id+"\"}")).andExpect(status().isNoContent());
+  for (Account actor:List.of(a,b)) http.perform(post("/api/discovery/decisions").with(user(actor.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(vote(actor==a?b:a,"LIKE"))).andExpect(status().isNotFound());
+  assertThat(sql.queryForObject("SELECT COUNT(*) FROM collaboration_matches",Long.class)).isEqualTo(0);
+ }
+ @Test void reportsArePrivateRetrySafeAndAcceptEndedMatches() throws Exception {
+  UUID id=match(),client=UUID.randomUUID();
+  String body="{\"clientId\":\""+client+"\",\"matchId\":\""+id+"\",\"reason\":\"Spam\",\"details\":\"Unwanted repeated promotion\"}";
+  http.perform(post("/api/safety/reports").with(user(a.email)).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isForbidden());
+  http.perform(post("/api/safety/reports").with(user(outside.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isNotFound());
+  http.perform(delete("/api/matches/"+id).with(user(a.email)).with(csrf())).andExpect(status().isNoContent());
+  var saved=http.perform(post("/api/safety/reports").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(jsonPath("$.status").value("RECORDED")).andReturn();
+  String reportId=json.readTree(saved.getResponse().getContentAsString()).get("id").asText();
+  http.perform(post("/api/safety/reports").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(jsonPath("$.id").value(reportId));
+  http.perform(post("/api/safety/reports").with(user(a.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body.replace("Spam","Other"))).andExpect(status().isConflict());
+  http.perform(get("/api/account/export").with(user(a.email))).andExpect(jsonPath("$.reports.length()").value(1));
+  http.perform(get("/api/account/export").with(user(b.email))).andExpect(jsonPath("$.reports.length()").value(0));
+ }
 }

@@ -36,7 +36,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-The full 34-test Java suite passed at the saved-project milestone; the updated 15-test collaboration suite passes with project management, 22 Python tests, 6 frontend state tests, frontend lint, and production build. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current verification: the full 42-test Java suite passes, including safety and account export. The 22 Python tests passed at the description milestone and three additional evaluation tests passed. Frontend state tests, lint, and production build have passed. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -73,3 +73,5 @@ Onboarding can suggest offered/needed skills from English descriptions. Review e
 Offline model evaluation now trains and compares a logistic baseline with weighted and random ranking on profile-disjoint synthetic splits. The learned model underperformed (held-out nDCG@5 0.000 versus weighted 0.219); the live scorer is unchanged. Results are in ai/artifacts/synthetic-ranking-report.json. Three additional evaluation correctness tests pass. These metrics describe synthetic labels, not user outcomes.
 
 Signed-in users can choose Download my data to download their saved profile and activity as JSON. Exports include retained history but exclude credentials and other users' private content. This is data access, not account deletion; deletion and retention policies remain release work.
+
+Real conversations now offer blocking and report recording. Blocking prevents either-direction discovery and closes contact through that match. Reports are privately retained, retry-safe, and participant-scoped; the local preview has no staffed review or notifications. Shared projects require separate leave/remove actions. Unblocking and moderation operations are still release work.

@@ -58,3 +58,9 @@ POST /api/onboarding/skills accepts description (nonblank, up to 1000 characters
 ## Account data download
 
 GET /api/account/export requires authentication and returns an attachment named teamforge-account-data.json with Cache-Control: no-store. It contains formatVersion, exportedAt, account identity (no credentials), the owner's profile, decisions, match metadata, authored messages and coffee invitations, owned project details, and the caller's membership history. Ended match/membership history is included because records remain retained. Other members' profile contents, emails, messages, and rosters are excluded. Queries derive ownership only from the session, with a repeatable-read transaction; no account ID can select another user's export. This download does not delete data.
+
+## Blocking and reporting
+
+Authenticated CSRF-protected POST /api/safety/blocks accepts targetId, rejects self-blocks, and persists an idempotent directional block. Either direction excludes both profiles from discovery and stops new likes. Blocking closes any active match, ending messages, coffee invitations, and invitations through that match. Unblocking is not available yet. Shared project memberships are not removed automatically; use project leave/removal controls.
+
+POST /api/safety/reports accepts clientId, matchId, reason (Harassment, Spam, Impersonation, Other), and details (up to 1000 characters). Only a participant in that active or ended match can record a report. Identical client-ID retries return the same receipt; changed payload returns 409. A reporter may create ten reports per rolling 24 hours; excess returns 429. Status RECORDED means stored, not reviewed. There is no staffed moderation queue or external notification in the local preview. Reports do not automatically block. Account export includes only the caller's authored reports and blocks. No user-facing report-list endpoint shares reports with the reported person.

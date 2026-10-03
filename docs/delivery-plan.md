@@ -34,3 +34,5 @@ Description-based skill suggestions are implemented as a reviewed English rule-b
 Offline synthetic model evaluation is implemented with profile-disjoint train/validation/test groups. The trained logistic baseline failed to improve held-out ranking and was not promoted. Remaining intelligence work needs better training data and fresh evaluation before production adoption.
 
 Account data download is implemented with owner-only fields, no-cache responses, and isolation coverage. Account recovery, abuse controls, retention/deletion, and public hosting remain release work.
+
+Blocking and private report recording are implemented. Public-release safety still needs a functioning moderation workflow, unblocking/account recovery, retention/deletion, and production deployment verification.
