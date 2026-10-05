@@ -93,3 +93,5 @@ The app includes a keyboard-accessible Help & privacy dialog explaining visibili
 Build an integrated frontend/API JAR with `./scripts/build-release.ps1`. CI verifies and uploads this artifact for seven days. See [release instructions](docs/release.md) for a separate-database local smoke test and production prerequisites. Packaging is implemented; public hosting and PostgreSQL verification remain outstanding.
 
 October 5 verification: the integrated JAR returned HTML and both bundled JS/CSS assets with HTTP 200, health UP, and HTTP 401 for unauthenticated account export. The Help dialog was checked at a 390px viewport and dismissed with Escape. These checks used a separate local H2 smoke-test database; they do not validate PostgreSQL or public HTTPS.
+
+Before a local demo, run `./scripts/check-app.ps1` to check service health and private-route protection. For the integrated frontend at port 8080, add `-AppUrl http://127.0.0.1:8080 -Release`. The delivery plan tracks eight core milestones completed and two in progress.

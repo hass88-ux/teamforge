@@ -17,3 +17,7 @@ For production, activate `SPRING_PROFILES_ACTIVE=production`, set `DATABASE_URL`
 Still required before public beta: provision hosting and PostgreSQL, verify all migrations/locking against PostgreSQL, exercise HTTPS cookies and same-origin routing, configure backups and restore checks, and establish report review and public privacy/contact information. This document and packaged artifact are preparation, not evidence of a deployed service.
 
 Local verification on October 5: 48 Java tests passed; packaged HTML, JavaScript and CSS returned 200, health returned UP, and unauthenticated export returned 401 on port 8081 with an isolated H2 database. The existing development services also returned healthy responses.
+
+## Repeatable smoke check
+
+Run `./scripts/check-app.ps1` for the default local development services. Run `./scripts/check-app.ps1 -AppUrl http://127.0.0.1:8080 -Release` for the integrated JAR serving the frontend on the API port. Override AppUrl, ApiUrl and RecommendationUrl for another explicitly configured environment. This check sends only anonymous GET requests; it does not sign in or mutate data. Nonzero exit means a service, asset, or route protection failed. Windows PowerShell and PowerShell 7 response bodies are decoded consistently.

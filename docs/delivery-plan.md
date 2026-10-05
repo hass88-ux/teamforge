@@ -38,3 +38,22 @@ Account data download is implemented with owner-only fields, no-cache responses,
 Blocking and private report recording are implemented. Public-release safety still needs a functioning moderation workflow, email recovery, retention policy, and production deployment verification.
 
 October 5 batch: mobile/keyboard polish, in-app Help & privacy, and integrated frontend/API release packaging are implemented. CI now builds the release JAR as a downloadable artifact. Public hosting, PostgreSQL integration, HTTPS checks, moderation operations, optional OAuth, and final beta acceptance remain unfinished. The in-app local privacy explanation is not a production public privacy/contact policy.
+
+## Milestone status as of October 5
+
+Eight of ten milestones have their core scope completed locally; release and final polish remain in progress. This count does not claim optional OAuth or a publicly launched beta.
+
+| Milestone | Status | Evidence or remaining work |
+| --- | --- | --- |
+| 1 Foundation | Complete | Repository, CI, reproducible setup |
+| 2 Profiles | Complete | Validated onboarding and migrations |
+| 3 Demo | Complete | 600 sample profiles and isolated demo state |
+| 4 Discovery | Complete | Intent rules, scoring, real mutual matching |
+| 5 Collaboration | Complete | Authorized messages and coffee proposals |
+| 6 Real accounts | Complete | Sessions, ownership, privacy, recovery keys, deletion |
+| 7 Intelligence baseline | Complete | Profile-disjoint synthetic evaluation; failed learned baseline not promoted |
+| 8 Teams core | Complete | Saved projects, consent-based invitations, tasks, demo team optimization; optional OAuth and automatic real-team ranking remain future work |
+| 9 Release | In progress | Packaged app and repeatable smoke check verified; hosting, PostgreSQL, HTTPS, backup/restore and moderation operations remain |
+| 10 Final polish | In progress | Mobile/help/keyboard improvements and screenshots; broader device and final beta acceptance review remain |
+
+The read-only smoke check passes against both Vite development and the bundled frontend on the local API. It verifies service health, release assets, and unauthenticated route protection without creating accounts or changing data.
