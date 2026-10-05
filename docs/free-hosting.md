@@ -22,3 +22,5 @@ After the user completes account signup and provider terms:
 5. Verify HTTPS, saved profile persistence, mutual matches, messaging, tasks and secure sessions on the actual deployed URL. Run the acceptance checklist. No real-user beta is claimed until these checks pass.
 
 The configured application uses no paid language-model API. PostgreSQL data remains outside Render's ephemeral filesystem. Free accounts and terms need the user's participation; credentials and OAuth consent must stay under their control.
+
+Verified container checkpoint: all jobs passed for f781eab in [GitHub Actions](https://github.com/hass88-ux/teamforge/actions/runs/37273953764), including Docker build and the 512 MiB combined-service smoke check. Actual Neon connectivity and Render HTTPS remain pending deployment. The user already has Render; Neon signup is outstanding.

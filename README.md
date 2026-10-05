@@ -99,3 +99,5 @@ Before a local demo, run `./scripts/check-app.ps1` to check service health and p
 The complete backend suite now passes against PostgreSQL 16 in CI as well as local H2. See [PostgreSQL verification](docs/postgresql.md). This validates an isolated test database, not a live deployment.
 
 Workspace polish: conversations opened from the dashboard now name their return destination correctly. Project invitation controls exclude current and previously invited members, matching server eligibility. Development remains free and local; no paid hosting or credit-card setup has been introduced.
+
+Free-hosting preparation: a combined frontend/Java/private-Python Docker image and Render Free configuration are implemented. CI successfully built and started the image within a 512 MiB limit, served the frontend, denied anonymous account export, and reached Python skill suggestions through Java. Proposed persistent database: Neon Free. See [free hosting](docs/free-hosting.md) for limits and setup. No cloud resource or paid service has been created.
