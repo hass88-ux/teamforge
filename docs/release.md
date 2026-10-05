@@ -21,3 +21,5 @@ Local verification on October 5: 48 Java tests passed; packaged HTML, JavaScript
 ## Repeatable smoke check
 
 Run `./scripts/check-app.ps1` for the default local development services. Run `./scripts/check-app.ps1 -AppUrl http://127.0.0.1:8080 -Release` for the integrated JAR serving the frontend on the API port. Override AppUrl, ApiUrl and RecommendationUrl for another explicitly configured environment. This check sends only anonymous GET requests; it does not sign in or mutate data. Nonzero exit means a service, asset, or route protection failed. Windows PowerShell and PowerShell 7 response bodies are decoded consistently.
+
+October 5 PostgreSQL checkpoint: the complete backend suite passed against an isolated PostgreSQL 16 service in GitHub Actions (commit 2237154). All eight Flyway migrations and the existing application tests ran successfully. See [PostgreSQL verification](postgresql.md) for database isolation and backup scope. Public hosting, provider credentials and production HTTPS remain unfinished.

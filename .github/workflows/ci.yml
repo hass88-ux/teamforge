@@ -1,5 +1,8 @@
 name: Build and test
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 jobs:
   postgres:
     runs-on: ubuntu-latest
@@ -28,6 +31,15 @@ jobs:
           -Dspring.datasource.username=teamforge_tests
           -Dspring.datasource.password=ephemeral-ci-only
           -Dspring.datasource.driver-class-name=org.postgresql.Driver
+      - name: Verify isolated backup restore
+        run: |
+          container='${{ job.services.postgres.id }}'
+          docker exec "$container" pg_dump -U teamforge_tests -d teamforge_tests -Fc -f /tmp/teamforge-tests.dump
+          docker exec "$container" createdb -U teamforge_tests teamforge_restore_tests
+          docker exec "$container" pg_restore -U teamforge_tests -d teamforge_restore_tests --exit-on-error /tmp/teamforge-tests.dump
+          migrations=$(docker exec "$container" psql -U teamforge_tests -d teamforge_restore_tests -Atc 'SELECT count(*) FROM flyway_schema_history WHERE success')
+          test "$migrations" -eq 8
+          docker exec "$container" psql -U teamforge_tests -d teamforge_restore_tests -v ON_ERROR_STOP=1 -c 'SELECT count(*) FROM accounts; SELECT count(*) FROM project_tasks; SELECT count(*) FROM collaboration_messages;'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

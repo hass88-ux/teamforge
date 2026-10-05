@@ -57,3 +57,5 @@ Eight of ten milestones have their core scope completed locally; release and fin
 | 10 Final polish | In progress | Mobile/help/keyboard improvements and screenshots; broader device and final beta acceptance review remain |
 
 The read-only smoke check passes against both Vite development and the bundled frontend on the local API. It verifies service health, release assets, and unauthenticated route protection without creating accounts or changing data.
+
+October 5 PostgreSQL checkpoint: the complete backend suite passed against an isolated PostgreSQL 16 service in GitHub Actions (commit 2237154). All eight Flyway migrations and the existing application tests ran successfully. See [PostgreSQL verification](postgresql.md) for database isolation and backup scope. Public hosting, provider credentials and production HTTPS remain unfinished.
