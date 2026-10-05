@@ -1,6 +1,39 @@
 name: Build and test
 on: [push, pull_request]
 jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: teamforge_tests
+          POSTGRES_USER: teamforge_tests
+          POSTGRES_PASSWORD: ephemeral-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U teamforge_tests -d teamforge_tests"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: >-
+          mvn -B -f backend/pom.xml verify
+          -Dspring.datasource.url=jdbc:postgresql://127.0.0.1:5432/teamforge_tests
+          -Dspring.datasource.username=teamforge_tests
+          -Dspring.datasource.password=ephemeral-ci-only
+          -Dspring.datasource.driver-class-name=org.postgresql.Driver
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: postgres-test-results
+          path: backend/target/surefire-reports/
+          retention-days: 7
   backend:
     runs-on: ubuntu-latest
     steps:
