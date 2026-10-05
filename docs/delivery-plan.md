@@ -36,3 +36,5 @@ Offline synthetic model evaluation is implemented with profile-disjoint train/va
 Account data download is implemented with owner-only fields, no-cache responses, and isolation coverage. Recovery keys and account deletion are implemented. Email recovery, moderation operations, retention policy, and public hosting remain release work.
 
 Blocking and private report recording are implemented. Public-release safety still needs a functioning moderation workflow, email recovery, retention policy, and production deployment verification.
+
+October 5 batch: mobile/keyboard polish, in-app Help & privacy, and integrated frontend/API release packaging are implemented. CI now builds the release JAR as a downloadable artifact. Public hosting, PostgreSQL integration, HTTPS checks, moderation operations, optional OAuth, and final beta acceptance remain unfinished. The in-app local privacy explanation is not a production public privacy/contact policy.

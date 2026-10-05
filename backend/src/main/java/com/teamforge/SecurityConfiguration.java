@@ -20,6 +20,8 @@ class SecurityConfiguration {
  @Bean SecurityFilterChain security(HttpSecurity http,AccountRepository accounts) throws Exception {
   http.authorizeHttpRequests(auth -> auth
     .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.GET,"/", "/index.html", "/assets/**", "/favicon.svg").permitAll()
+    .requestMatchers(org.springframework.http.HttpMethod.HEAD,"/", "/index.html", "/assets/**", "/favicon.svg").permitAll()
     .requestMatchers("/api/auth/csrf", "/api/auth/signup", "/api/auth/login", "/api/auth/recover", "/api/demo/**", "/api/onboarding/validate", "/api/onboarding/skills", "/actuator/health", "/actuator/health/**").permitAll()
     .requestMatchers("/api/auth/me", "/api/dashboard", "/api/people/**", "/api/profiles/me/details", "/api/account/**", "/api/account/export", "/api/safety/**", "/api/profiles/me", "/api/profiles/me/visibility", "/api/discovery/**", "/api/matches/**", "/api/projects", "/api/projects/**").authenticated().anyRequest().denyAll())
    .csrf(csrf -> csrf.ignoringRequestMatchers("/api/demo/**", "/api/onboarding/validate", "/api/onboarding/skills"))

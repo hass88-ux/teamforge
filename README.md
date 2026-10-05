@@ -36,7 +36,7 @@ See [architecture](docs/architecture.md), [demo system](docs/demo-system.md), [r
 
 ## Verification
 
-Current verification: the full 47-test Java suite passes, including safety and account export. The 22 Python tests passed at the description milestone and three additional evaluation tests passed. Frontend state tests, lint, and production build have passed. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
+Current verification: the full 48-test Java suite passes, including safety and account export. The 22 Python tests passed at the description milestone and three additional evaluation tests passed. Frontend state tests, lint, and production build have passed. CI runs these suites. Browser walkthroughs cover onboarding, scored discovery, fictional projects, simulated match/message/coffee chat, project creation, feasible team coverage, and an honest infeasible result.
 
 A local two-account walkthrough verified compatibility, reciprocal likes, saved messages/replies, and recovered history after a backend restart. QA accounts are not real-user traction.
 
@@ -85,3 +85,11 @@ Full profile pages show public collaboration fields, an optional self-provided G
 Projects support tasks and milestones, optional due dates, completion toggles, and progress. Owners and accepted members can write; pending invitees can only view. Revision checks reject stale completion updates.
 
 Account settings include discovery visibility, public profile details, blocked users, recovery keys, and permanent account deletion. Generate a private recovery key after confirming your password and save it securely: it is shown once, stored only as a hash, replaces any previous key, and can reset a password once. Recovery invalidates existing sessions on their next request. Email recovery is not provided. Deletion requires your password and typed confirmation, and cascades account-related records, including owned projects and related conversations. Download your data first if needed.
+
+### Release preparation and usability
+
+The app includes a keyboard-accessible Help & privacy dialog explaining visibility, matching, demo behavior, contact controls, recovery, and deletion. Narrow-screen layouts wrap controls and cards; project checkboxes stay compact. A Skip to content link supports keyboard navigation.
+
+Build an integrated frontend/API JAR with `./scripts/build-release.ps1`. CI verifies and uploads this artifact for seven days. See [release instructions](docs/release.md) for a separate-database local smoke test and production prerequisites. Packaging is implemented; public hosting and PostgreSQL verification remain outstanding.
+
+October 5 verification: the integrated JAR returned HTML and both bundled JS/CSS assets with HTTP 200, health UP, and HTTP 401 for unauthenticated account export. The Help dialog was checked at a 390px viewport and dismissed with Escape. These checks used a separate local H2 smoke-test database; they do not validate PostgreSQL or public HTTPS.

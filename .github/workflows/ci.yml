@@ -10,7 +10,19 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: mvn -B -f backend/pom.xml verify
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci
+      - run: npm --prefix frontend run build
+      - run: mvn -B -f backend/pom.xml -Prelease verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: teamforge-release
+          path: backend/target/teamforge-api-0.1.0-SNAPSHOT.jar
+          retention-days: 7
   frontend:
     runs-on: ubuntu-latest
     defaults:
