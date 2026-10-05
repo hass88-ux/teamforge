@@ -97,3 +97,5 @@ October 5 verification: the integrated JAR returned HTML and both bundled JS/CSS
 Before a local demo, run `./scripts/check-app.ps1` to check service health and private-route protection. For the integrated frontend at port 8080, add `-AppUrl http://127.0.0.1:8080 -Release`. The delivery plan tracks eight core milestones completed and two in progress.
 
 The complete backend suite now passes against PostgreSQL 16 in CI as well as local H2. See [PostgreSQL verification](docs/postgresql.md). This validates an isolated test database, not a live deployment.
+
+Workspace polish: conversations opened from the dashboard now name their return destination correctly. Project invitation controls exclude current and previously invited members, matching server eligibility. Development remains free and local; no paid hosting or credit-card setup has been introduced.

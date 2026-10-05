@@ -11,3 +11,5 @@ Production still requires a separate database, private credentials, encrypted co
 No automatic H2-to-PostgreSQL transfer is implemented. Local QA records should not be treated as launch users. A fresh beta database is the default; transferring real local records would require a separate reviewed migration.
 
 Verified: PostgreSQL suite succeeded for commit 2237154 in [GitHub Actions](https://github.com/hass88-ux/teamforge/actions/runs/37269918989). Backup/restore verification is added in the following commit and must pass separately before being reported as verified.
+
+Backup/restore verified: the PostgreSQL suite and isolated restore check both succeeded for commit 16f6e71 in [GitHub Actions](https://github.com/hass88-ux/teamforge/actions/runs/37270064645). Production backups remain unconfigured.

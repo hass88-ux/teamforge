@@ -8,7 +8,7 @@ import PublicProfile from './PublicProfile'
 
 export type RealMatch = { id: string; partnerId: string; lastMessage?: string; unreadCount?: number; displayName: string; entityType: string; matchingIntent: string; compatibility: number }
 type Message = { sequence: number; clientId: string; fromYou: boolean; text: string; sentAt: string }
-export default function RealConversation({ match, onBack, onUnmatched }: { match: RealMatch; onBack: () => void; onUnmatched: () => void }) {
+export default function RealConversation({ match, onBack, onUnmatched, backLabel = 'Back to discovery' }: { match: RealMatch; backLabel?: string; onBack: () => void; onUnmatched: () => void }) {
   const [viewProfile, setViewProfile] = useState(false)
   const polling = useRef(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -66,7 +66,7 @@ export default function RealConversation({ match, onBack, onUnmatched }: { match
     finally { setBusy(false) }
   }
   if (viewProfile) return <PublicProfile id={match.partnerId} onBack={() => setViewProfile(false)}/>
-  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>Back to discovery</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><button className="text-button" onClick={() => setViewProfile(true)}>View collaborator profile</button><p className="note">Messages are saved to your conversation. Only the two matched members can access them. New replies refresh automatically every 15 seconds while this screen is visible; you can also refresh manually.</p>
+  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>{backLabel}</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><button className="text-button" onClick={() => setViewProfile(true)}>View collaborator profile</button><p className="note">Messages are saved to your conversation. Only the two matched members can access them. New replies refresh automatically every 15 seconds while this screen is visible; you can also refresh manually.</p>
     {error && <p className="error" role="alert">{error}</p>}
     <div className="message-list" role="log" aria-label="Conversation messages" aria-live="polite">{!loading && !messages.length && <p>Introduce yourself and share something you’d like to build.</p>}{messages.map(message => <article key={message.sequence} className={`message ${message.fromYou ? 'you' : 'received'}`}><strong>{message.fromYou ? 'You' : match.displayName}</strong><p>{message.text}</p><time dateTime={message.sentAt}>{new Date(message.sentAt).toLocaleString()}</time></article>)}</div>
     <button className="secondary" disabled={loading || busy} onClick={() => void load()}>{loading ? 'Loading…' : hasMore ? 'Load more messages' : 'Refresh messages'}</button>
