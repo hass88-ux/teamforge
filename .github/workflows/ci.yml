@@ -4,6 +4,26 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build free-preview image
+        run: docker build -t teamforge-preview .
+      - name: Check combined service in a 512 MiB container
+        run: |
+          docker run -d --name teamforge-preview --memory=512m -p 8080:8080 teamforge-preview
+          trap 'docker logs teamforge-preview; docker rm -f teamforge-preview' EXIT
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8080/actuator/health/readiness; then ready=true; break; fi
+            sleep 2
+          done
+          test "$ready" = true
+          curl --fail --silent http://127.0.0.1:8080/ | grep 'id="root"'
+          test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/account/export)" = 401
+          curl --fail --silent -H 'Content-Type: application/json' -d '{"description":"I can provide Java skills"}' http://127.0.0.1:8080/api/onboarding/skills
+          docker stats --no-stream teamforge-preview
   postgres:
     runs-on: ubuntu-latest
     services:
