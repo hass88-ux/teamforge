@@ -9,3 +9,9 @@
 .onboarding textarea { min-height: 110px; width: 100%; }
 
 .dashboard .summary-grid button{display:block;width:100%;margin:12px 0;text-align:left}.dashboard .summary-grid button p{margin:8px 0 0;overflow-wrap:anywhere}.account-strip{flex-wrap:wrap}.account-strip .actions{flex-wrap:wrap}.preview{overflow-wrap:anywhere}
+
+/* Keep project checkboxes compact and prevent narrow cards overflowing. */
+input[type=checkbox]{width:20px;max-width:20px;height:20px;padding:0;margin-right:10px;accent-color:#d3f76a;vertical-align:middle}
+.summary-grid>*,.discovery-layout>*,.hero>*{min-width:0}button{overflow-wrap:anywhere}#main-content:focus{outline:none}.skip-link{position:absolute;left:12px;top:-100px;z-index:30;background:#d3f76a;color:#182019;padding:12px;border-radius:8px}.skip-link:focus{top:12px}
+.help-dialog{color:#e9edf6;background:#171d27;border:1px solid #3b4454;border-radius:18px;padding:28px;width:min(700px,calc(100% - 32px));max-height:85vh;overflow:auto}.help-dialog::backdrop{background:#000b}.help-dialog h2{font-family:'Space Grotesk',sans-serif}.help-dialog summary{cursor:pointer;padding:14px 0;font-weight:700}.help-dialog details{border-top:1px solid #3b4454}.help-dialog p{color:#b4bdcf}.help-dialog .actions{justify-content:space-between;margin-top:0}
+@media(max-width:480px){main{padding:0 16px}nav{gap:10px;padding:22px 0}.brand{font-size:18px}.nav-actions{gap:6px}.actions{gap:12px}.onboarding-controls{flex-wrap:wrap}.onboarding-top{flex-wrap:wrap}.recommendation-card{padding:18px}.card-bottom{flex-wrap:wrap;gap:12px}.conversation h1,.discover h1{overflow-wrap:anywhere;font-size:32px}.summary-grid article{padding:18px}.help-dialog{padding:20px}}
