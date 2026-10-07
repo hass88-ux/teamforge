@@ -24,3 +24,5 @@ After the user completes account signup and provider terms:
 The configured application uses no paid language-model API. PostgreSQL data remains outside Render's ephemeral filesystem. Free accounts and terms need the user's participation; credentials and OAuth consent must stay under their control.
 
 Verified container checkpoint: all jobs passed for f781eab in [GitHub Actions](https://github.com/hass88-ux/teamforge/actions/runs/37273953764), including Docker build and the 512 MiB combined-service smoke check. Actual Neon connectivity and Render HTTPS remain pending deployment. The user already has Render; Neon signup is outstanding.
+
+October 7: the user approved credential transfer to Render and public deployment. Neon project/database teamforge is on Free/PostgreSQL 16. Render service teamforge is Free, and https://teamforge-jq44.onrender.com reached Live after eight successful Flyway migrations. Credentials were entered only in Render environment fields; none are in this repository. Hosted preview validation and production operations are separate from this startup result.

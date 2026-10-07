@@ -2,7 +2,7 @@
 
 Find the people you should build with.
 
-TeamForge is being built as a collaborator matchmaking platform with structured, reciprocal recommendations. This repository has a working local demo and is still in development. There is no public deployment or real-user traction yet.
+TeamForge is being built as a collaborator matchmaking platform with structured, reciprocal recommendations. This repository has a working local demo and is still in development. A free hosted development preview is available at https://teamforge-jq44.onrender.com. No real-user traction is claimed.
 
 ## Current implementation
 
@@ -101,3 +101,5 @@ The complete backend suite now passes against PostgreSQL 16 in CI as well as loc
 Workspace polish: conversations opened from the dashboard now name their return destination correctly. Project invitation controls exclude current and previously invited members, matching server eligibility. Development remains free and local; no paid hosting or credit-card setup has been introduced.
 
 Free-hosting preparation: a combined frontend/Java/private-Python Docker image and Render Free configuration are implemented. CI successfully built and started the image within a 512 MiB limit, served the frontend, denied anonymous account export, and reached Python skill suggestions through Java. Proposed persistent database: Neon Free. See [free hosting](docs/free-hosting.md) for limits and setup. No cloud resource or paid service has been created.
+
+October 7 hosted checkpoint: Render Free connected to Neon Free PostgreSQL 16; all eight migrations applied and the service reached Live. The free service sleeps when idle and sessions reset on restart. This is a development preview; staffed moderation, production backup operations and full beta acceptance remain outstanding. No payment details or paid plans were added.
