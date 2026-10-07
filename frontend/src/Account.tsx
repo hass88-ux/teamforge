@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { accountRequest } from './accountApi'
 import Onboarding from './Onboarding'
 import AccountSettings from './AccountSettings'
@@ -8,7 +9,7 @@ import ModerationPanel from './ModerationPanel'
 import type { ProfileDraft } from './profile'
 
 type AccountView = { id: string; email: string; accountType: 'REAL' }
-export default function Account({ initialMode, onExit }: { initialMode: 'login' | 'signup'; onExit: () => void }) {
+export default function Account({ initialMode, onExit, onSignedInChange }: { initialMode: 'login' | 'signup'; onExit: () => void; onSignedInChange: (value: boolean) => void }) {
   const [mode, setMode] = useState(initialMode)
   const [moderator, setModerator] = useState(false), [reviewing, setReviewing] = useState(false)
   const [settings, setSettings] = useState(false), [recovery, setRecovery] = useState(false)
@@ -44,6 +45,7 @@ export default function Account({ initialMode, onExit }: { initialMode: 'login' 
     }).catch(() => { if (active) setModerator(false) })
     return () => { active = false }
   }, [account])
+  useEffect(() => { onSignedInChange(Boolean(account)) }, [account, onSignedInChange])
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
@@ -82,7 +84,7 @@ export default function Account({ initialMode, onExit }: { initialMode: 'login' 
     finally { setBusy(false) }
   }
   if (loading) return <section className="onboarding"><p role="status">Checking your session…</p></section>
-  if (account) return <><div className="account-strip"><span>Signed in as {account.email} · Real account</span><div className="actions"><button className="secondary" disabled={busy} onClick={() => { setReviewing(false); setSettings(true) }}>Account settings</button>{moderator && <button className="secondary" disabled={busy} onClick={() => { setSettings(false); setReviewing(true) }}>Review reports</button>}<button className="secondary" onClick={() => void downloadData()} disabled={busy}>Download my data</button><button className="secondary" onClick={() => void logout()} disabled={busy}>Log out</button></div></div>{error && <p className="error" role="alert">{error}</p>}{reviewing && moderator ? <ModerationPanel onBack={() => setReviewing(false)}/> : settings ? <AccountSettings onBack={() => setSettings(false)} onDeleted={() => { setAccount(null); setProfile(undefined); setSettings(false); setReviewing(false); setModerator(false); onExit() }}/> : <Onboarding key={account.id} mode="REAL" initialProfile={profile} onProfileSaved={setProfile} onExit={onExit}/>}</>
+  if (account) return <>{document.getElementById('account-header-actions') && createPortal(<button className="secondary" disabled={busy} onClick={() => void logout()}>Sign out</button>, document.getElementById('account-header-actions')!)}{error && <p className="error" role="alert">{error}</p>}{reviewing && moderator ? <ModerationPanel onBack={() => setReviewing(false)}/> : settings ? <AccountSettings onDownload={() => void downloadData()} downloading={busy} onBack={() => setSettings(false)} onDeleted={() => { setAccount(null); setProfile(undefined); setSettings(false); setReviewing(false); setModerator(false); onExit() }}/> : <Onboarding onOpenSettings={() => { setReviewing(false); setSettings(true) }} onReviewReports={moderator ? () => { setSettings(false); setReviewing(true) } : undefined} key={account.id} mode="REAL" initialProfile={profile} onProfileSaved={setProfile} onExit={onExit}/>}</>
   if (recovery) return <RecoveryPanel onBack={() => { setRecovery(false); setMode('login') }}/>
   return <section className="auth-form"><span className="demo-label">REAL ACCOUNT · YOUR PROFILE IS SAVED</span><h1>{mode === 'signup' ? 'Start building.' : 'Welcome back.'}</h1><p className="onboarding-subtitle">{mode === 'signup' ? 'Create your account and build your collaboration profile.' : 'Log in to edit your saved collaboration profile.'}</p><p className="note">Create a profile, discover compatible people, and start a conversation when you both like each other. Try demo without an account.</p><form onSubmit={submit}><label className="input-label" htmlFor="account-email">Email</label><input id="account-email" type="email" autoComplete="email" maxLength={254} required value={email} onChange={event => setEmail(event.target.value)}/><label className="input-label" htmlFor="account-password">Password</label><input id="account-password" type="password" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} minLength={12} maxLength={72} required value={password} onChange={event => setPassword(event.target.value)}/><p className="note">At least 12 characters. Passwords are hashed; they are never part of your public profile. No email verification is available yet. Password recovery requires a saved recovery key.</p>{error && <p className="error" role="alert">{error}</p>}<div className="actions"><button disabled={busy}>{busy ? 'Please wait…' : mode === 'signup' ? 'Sign up' : 'Log in'}</button><button type="button" className="secondary" disabled={busy} onClick={() => { setMode(mode === 'signup' ? 'login' : 'signup'); setError('') }}>{mode === 'signup' ? 'Already have an account?' : 'Create an account'}</button></div></form><button className="text-button" onClick={() => setRecovery(true)}>Recover account with a saved key</button><button className="text-button" onClick={onExit}>Back to home</button></section>
 }

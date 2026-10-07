@@ -109,3 +109,5 @@ Signed-in discovery now interleaves real recommendations with an 800-profile gen
 Launch preparation: private report review now supports audited dismissal and match closure, with access restricted to explicitly configured account IDs. The support/privacy contact is muhammadhassanamir888@gmail.com. Encrypted PostgreSQL backup and isolated restore tooling, tamper checks, and a disposable two-account acceptance script are included. Moderator activation, daily production backups and a production restore drill still require owner setup; do not treat the preview as operationally complete. See [launch operations](docs/launch-operations.md).
 
 Discovery refresh now restores the selected workspace view and loads generated profiles independently of real ranking failures. A persistent workspace navigation bar and dashboard counts make discovery, projects and profile controls accessible from the top; dashboard counts reflect actual account records only.
+
+Signed-in navigation now shows Sign out in the main header and places workspace tabs directly beneath it. The signed-in email strip is removed; Download my data is available in Account settings.
