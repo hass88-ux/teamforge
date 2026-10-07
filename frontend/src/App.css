@@ -54,7 +54,7 @@ button{min-height:44px;transition:background .15s,border-color .15s}
 @media(max-width:800px){.dashboard .summary-grid{grid-template-columns:1fr}.discover .discovery-layout{grid-template-columns:1fr}.explanation{padding:16px 4px}}
 @media(max-width:600px){
  main>nav{min-height:68px;padding:12px 0}.workspace-nav{padding:8px 0;position:sticky;top:0;background:#10131bf5;z-index:10;backdrop-filter:blur(12px)}
- .workspace-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px}.workspace-tabs button{white-space:nowrap;flex-shrink:0;padding:8px 12px}
+ .workspace-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;scrollbar-width:none}.workspace-tabs::-webkit-scrollbar{display:none}.workspace-tabs button{white-space:nowrap;flex-shrink:0;padding:8px 12px}
  .workspace-nav+.onboarding,.workspace-nav+.discover{margin-top:18px}.discover .onboarding-top{align-items:start;flex-wrap:nowrap}.discover .onboarding-top>.text-button{display:none}
  .next-action{padding:18px;flex-direction:column;align-items:start;gap:16px}.next-action button{width:100%}.workspace-metrics{gap:8px}.workspace-metrics article{padding:12px}
  .dashboard>.actions{flex-wrap:wrap}.dashboard>.actions .secondary{display:none}.recommendation-card{padding:18px}.recommendation-card .onboarding-controls{display:grid;grid-template-columns:1fr 1.5fr;gap:12px}
