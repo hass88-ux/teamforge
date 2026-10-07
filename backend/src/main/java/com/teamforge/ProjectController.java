@@ -47,7 +47,28 @@ class ProjectController {
  }
  @GetMapping List<Project> list(Authentication auth) {
   UUID actor=collaboration.owner(auth);
-  return transaction.execute(s->sql.queryForList("SELECT p.* FROM projects p WHERE owner_id=? OR EXISTS(SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.account_id=? AND m.status IN ('INVITED','ACCEPTED')) ORDER BY created_at DESC,id LIMIT 100 FOR UPDATE",actor,actor).stream().map(p->view(p,actor)).toList());
+  return transaction.execute(s->{
+   var rows=sql.queryForList("SELECT p.* FROM projects p WHERE owner_id=? OR EXISTS(SELECT 1 FROM project_members m WHERE m.project_id=p.id AND m.account_id=? AND m.status IN ('INVITED','ACCEPTED')) ORDER BY created_at DESC,id LIMIT 100 FOR UPDATE",actor,actor);
+   if (rows.isEmpty()) return List.of();
+   String placeholders=String.join(",",Collections.nCopies(rows.size(),"?"));
+   var members=new HashMap<UUID,List<Member>>();
+   var names=new HashMap<UUID,String>();
+   var ownerIds=rows.stream().map(p->(UUID)p.get("owner_id")).distinct().toList();
+   sql.query("SELECT account_id,profile_json FROM profiles WHERE account_id IN ("+String.join(",",Collections.nCopies(ownerIds.size(),"?"))+")",r->{ names.put(r.getObject(1,UUID.class),profileName(r.getString(2))); },ownerIds.toArray());
+   sql.query("SELECT m.project_id,m.account_id,COALESCE(m.ended_reason,m.status),p.profile_json FROM project_members m LEFT JOIN profiles p ON p.account_id=m.account_id WHERE m.project_id IN ("+placeholders+") ORDER BY m.account_id",r->{
+    members.computeIfAbsent(r.getObject(1,UUID.class),id->new ArrayList<>()).add(new Member(r.getObject(2,UUID.class),profileName(r.getString(4)),r.getString(3)));
+   },rows.stream().map(p->p.get("id")).toArray());
+   return rows.stream().map(p->{
+    UUID id=(UUID)p.get("id"),owner=(UUID)p.get("owner_id"); boolean owned=actor.equals(owner);
+    var team=new ArrayList<Member>(); team.add(new Member(owner,names.getOrDefault(owner,"Team member"),"OWNER")); team.addAll(members.getOrDefault(id,List.of()));
+    String status=owned?"OWNER":team.stream().filter(m->m.id().equals(actor)).findFirst().orElseThrow().status();
+    return new Project(id,owned,(String)p.get("name"),(String)p.get("description"),(String)p.get("stage"),((Number)p.get("revision")).longValue(),status,team);
+   }).toList();
+  });
+ }
+ private String profileName(String profile) {
+  if (profile==null) return "Team member";
+  try { return new com.fasterxml.jackson.databind.ObjectMapper().readTree(profile).path("displayName").asText("Team member"); } catch (Exception ex) { throw error(500); }
  }
  @PostMapping Project create(@Valid @RequestBody Draft draft,Authentication auth) {
   UUID actor=collaboration.owner(auth);

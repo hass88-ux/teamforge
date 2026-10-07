@@ -2,17 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { accountRequest } from './accountApi'
 import RealConversation from './RealConversation'
 import PublicProfile from './PublicProfile'
-import { isGenerated, combineFeed } from './discoveryFeed'
+import { isGenerated, mergeRankedFeed } from './discoveryFeed'
 import type { RealMatch } from './RealConversation'
 import type { ProfileDraft } from './profile'
 
 type PublicProfile = Omit<ProfileDraft, 'availability' | 'timezone'> & { id: string; accountType: 'REAL' | 'DEMO' }
 type Result = { candidate: PublicProfile; compatibility?: number; evidence: string[] }
+type SamplePage = { profiles: PublicProfile[]; hasMore: boolean }
 function sampleResults(profiles: PublicProfile[], intent: string): Result[] { return profiles.filter(p => p.accountType === 'DEMO' && (intent === 'COLLABORATOR' || p.matchingIntent !== intent)).map(candidate => ({ candidate, evidence: ['This generated demo account is for browsing only. It cannot match or message.'] })) }
 export default function RealDiscover({ onBack }: { onBack: () => void }) {
   const [sampleOffset, setSampleOffset] = useState(0)
   const [sampleMore, setSampleMore] = useState(false)
   const intent = useRef<string>('COLLABORATOR')
+  const interacted = useRef(false)
+  const prefetched = useRef<{ offset: number; page: Promise<SamplePage> } | null>(null)
+  async function samplePage(offset: number): Promise<SamplePage> {
+    const response = await accountRequest(`/api/demo/samples?offset=${offset}`)
+    if (!response.ok) throw new Error('Demo profiles could not load. Refresh discovery to retry.')
+    return response.json()
+  }
   const [person, setPerson] = useState<string | null>(null)
   const [matches, setMatches] = useState<RealMatch[]>([])
   const [activeMatch, setActiveMatch] = useState<RealMatch | null>(null)
@@ -32,35 +40,46 @@ export default function RealDiscover({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     let active = true
     async function load() {
-      setLoading(true); setError(''); setWarning('')
+      setLoading(true); setError(''); setWarning(''); interacted.current = false; prefetched.current = null
       try {
-        const [profileResult, discoveryResult, samplesResult] = await Promise.allSettled([
-          accountRequest('/api/profiles/me'), accountRequest('/api/discovery/recommendations'), accountRequest('/api/demo/samples?offset=0'),
-        ])
-        if (profileResult.status !== 'fulfilled') throw new Error('Cannot load your profile. Please try again.')
-        const profile = profileResult.value
+        // Start ranking in parallel, but don't hold the browsing feed behind inference.
+        const ranking = accountRequest('/api/discovery/recommendations').then(async response => {
+          if (!response.ok) throw new Error('Real recommendations are unavailable. You can still browse demo accounts.')
+          const ranked = await response.json()
+          if (ranked.accountType !== 'REAL' || !Array.isArray(ranked.recommendations) || !ranked.recommendations.every((item: Result) => item.candidate.accountType === 'REAL')) throw new Error('Real recommendations are unavailable.')
+          return ranked
+        }).then(value => ({ value, error: '' }), () => ({ value: null, error: 'Real recommendations are unavailable. You can still browse demo accounts.' }))
+        const examplesPromise = samplePage(0).then(value => ({ value, error: '' }), failure => ({ value: { profiles: [], hasMore: false } as SamplePage, error: failure.message as string }))
+        const profile = await accountRequest('/api/profiles/me')
         if (profile.status === 401) throw new Error('Your session expired. Please log in again.')
         if (!profile.ok) throw new Error('Cannot load your profile right now. Please try again.')
         const saved = await profile.json()
-        let recommendations: Result[] = [], poolLimited = false, message = ''
-        if (discoveryResult.status === 'fulfilled' && discoveryResult.value.ok) {
-          const ranked = await discoveryResult.value.json()
-          if (ranked.accountType === 'REAL' && Array.isArray(ranked.recommendations) && ranked.recommendations.every((item: Result) => item.candidate.accountType === 'REAL')) {
-            recommendations = ranked.recommendations; poolLimited = ranked.poolLimited
-          } else message = 'Real recommendations are unavailable. You can still browse demo accounts.'
-        } else message = 'Real recommendations are unavailable. You can still browse demo accounts.'
-        let examples = { profiles: [], hasMore: false }
-        if (samplesResult.status === 'fulfilled' && samplesResult.value.ok) examples = await samplesResult.value.json()
-        else message = 'Demo profiles could not load. Use Refresh discovery to retry.'
         intent.current = saved.profile.matchingIntent
+        const examples = await examplesPromise
         if (active) {
-          setVisible(saved.discoverable); setResults(combineFeed(recommendations, sampleResults(examples.profiles, intent.current)))
-          setSampleOffset(40); setSampleMore(examples.hasMore); setLimited(poolLimited); setIndex(0); setWarning(message)
-        }      } catch (failure) { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach discovery.') }
+          setVisible(saved.discoverable); setResults(sampleResults(examples.value.profiles, intent.current))
+          setSampleOffset(40); setSampleMore(examples.value.hasMore); setLimited(false); setIndex(0); setWarning(examples.error); setLoading(false)
+        }
+        const ranked = await ranking
+        if (active) {
+          if (ranked.value) {
+            setLimited(ranked.value.poolLimited)
+            setResults(previous => mergeRankedFeed(previous, ranked.value.recommendations, interacted.current))
+          }
+          setWarning([examples.error, ranked.error].filter(Boolean).join(' '))
+        }
+      } catch (failure) { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach discovery.') }
       finally { if (active) setLoading(false) }
     }
     void load(); return () => { active = false }
   }, [attempt])
+  useEffect(() => {
+    if (!loading && sampleMore && results.length - index <= 8 && prefetched.current?.offset !== sampleOffset) {
+      const page = samplePage(sampleOffset)
+      prefetched.current = { offset: sampleOffset, page }
+      void page.catch(() => { if (prefetched.current?.page === page) prefetched.current = null })
+    }
+  }, [loading, sampleMore, results.length, index, sampleOffset])
   useEffect(() => {
     let active = true
     accountRequest('/api/matches').then(async response => {
@@ -71,11 +90,12 @@ export default function RealDiscover({ onBack }: { onBack: () => void }) {
   }, [attempt])
   async function decide(decision: 'LIKE' | 'PASS') {
     if (busy || !results[index]) return
+    interacted.current = true
     if (isGenerated(results[index].candidate)) {
       setActionError(''); setNotice('Demo account: swipe recorded only for this browsing session. No match or message can be created.')
       if (index + 1 < results.length || !sampleMore) { setIndex(n => n + 1); return }
       setBusy(true)
-      try { const response = await accountRequest(`/api/demo/samples?offset=${sampleOffset}`); if (!response.ok) throw new Error('Cannot load more profiles. Please try again.'); const next = await response.json(); setResults(sampleResults(next.profiles, intent.current)); setIndex(0); setSampleOffset(n => n + 40); setSampleMore(next.hasMore) } catch (e) { setActionError(e instanceof Error ? e.message : 'Cannot load profiles.') } finally { setBusy(false) }
+      try { const next = await (prefetched.current?.offset === sampleOffset ? prefetched.current.page : samplePage(sampleOffset)); prefetched.current = null; setResults(sampleResults(next.profiles, intent.current)); setIndex(0); setSampleOffset(n => n + 40); setSampleMore(next.hasMore) } catch (e) { setActionError(e instanceof Error ? e.message : 'Cannot load profiles.') } finally { setBusy(false) }
       return
     }
     setBusy(true); setActionError(''); setNotice('')
@@ -99,20 +119,31 @@ export default function RealDiscover({ onBack }: { onBack: () => void }) {
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot reach your profile.') }
     finally { setBusy(false) }
   }
+  async function moreProfiles() {
+    if (busy || !sampleMore) return
+    setBusy(true); setActionError('')
+    try {
+      const next = await (prefetched.current?.offset === sampleOffset ? prefetched.current.page : samplePage(sampleOffset))
+      prefetched.current = null
+      setResults(previous => [...previous, ...sampleResults(next.profiles, intent.current)])
+      setSampleOffset(n => n + 40); setSampleMore(next.hasMore)
+    } catch (failure) { setActionError(failure instanceof Error ? failure.message : 'Cannot load more profiles.') }
+    finally { setBusy(false) }
+  }
   const current = results[index]
   if (person) return <PublicProfile id={person} onBack={() => setPerson(null)}/>
   if (activeMatch) return <RealConversation key={activeMatch.id} match={activeMatch} onBack={() => { setActiveMatch(null); setAttempt(value => value + 1) }} onUnmatched={() => { setActiveMatch(null); setAttempt(value => value + 1); setNotice('Match ended.') }} />
-  return <section className="discover"><div className="onboarding-top"><span className="demo-label">YOUR NETWORK</span><button className="text-button" onClick={onBack}>Dashboard</button></div><h1>Find people<br/><em>ready to build.</em></h1>
-    <section className="preview"><h2>Profile visibility</h2><p>{visible === null ? 'Loading your profile visibility…' : `Your profile is ${visible ? 'visible to signed-in members' : 'private'}.`} When enabled, discovery shares your name, description, type, intent, skills, interests, role preferences, goal, working style, and weekly commitment. Your email and selected schedule stay private.</p><button className="secondary" disabled={loading || busy || visible === null} onClick={() => void visibility()}>{busy ? 'Saving…' : visible ? 'Hide my profile from discovery' : 'Show my profile in discovery'}</button><p className="note">You can browse while private. Enable visibility to like people. Hiding your profile stops new discovery; existing matches stay available until you unmatch.</p></section>
+  return <section className="discover"><div className="onboarding-top"><div><span className="demo-label">DISCOVER</span><h1>Find your <em>next collaborator.</em></h1></div><button className="text-button" onClick={onBack}>Dashboard</button></div>
+    <details className="visibility-details"><summary>{visible === null ? 'Checking profile visibility…' : visible ? 'Your profile is visible · Privacy controls' : 'Your profile is private · Privacy controls'}</summary><p>When enabled, discovery shares your name, description, type, intent, skills, interests, role preferences, goal, working style, and weekly commitment. Your email and selected schedule stay private.</p><button className="secondary" disabled={loading || busy || visible === null} onClick={() => void visibility()}>{busy ? 'Saving…' : visible ? 'Hide my profile from discovery' : 'Show my profile in discovery'}</button><p className="note">You can browse while private. Enable visibility to like people. Hiding your profile stops new discovery; existing matches stay available until you unmatch.</p></details>
     {error && <div className="error" role="alert"><p>{error}</p><button disabled={loading || busy} onClick={() => setAttempt(value => value + 1)}>Try again</button></div>}
     {warning && <p role="status" className="note">{warning}</p>}<button className="secondary" disabled={loading || busy} onClick={() => setAttempt(value => value + 1)}>Refresh discovery</button>
     {notice && <p role="status" className="demo-disclosure">{notice}</p>}
     {actionError && <p role="alert" className="error">{actionError}</p>}
     {matchError && <div role="alert" className="error"><p>{matchError}</p><button onClick={() => setAttempt(value => value + 1)}>Retry matches</button></div>}
     {matches.length > 0 && <section className="liked-list"><h2>Your matches</h2><div className="match-list">{matches.map(match => <button className="secondary" key={match.id} onClick={() => setActiveMatch(match)}><strong>{match.displayName}</strong><span>{match.compatibility}% · {match.unreadCount || 0} unread · Open conversation →</span></button>)}</div></section>}
-    {loading && <p role="status">Finding compatible profiles…</p>}
+    {loading && <div className="card-skeleton" role="status"><div/><div/><div/><p>Loading profiles… The free server may take a moment to wake up.</p></div>}
     {!loading && !error && current && <div className="discovery-layout"><article className="recommendation-card swipe-card" tabIndex={0} aria-label="Swipe candidate: left to pass, right to like" onKeyDown={event => { if (event.target !== event.currentTarget) return; if (event.key === 'ArrowLeft') { event.preventDefault(); void decide('PASS') }; if (event.key === 'ArrowRight' && (visible || isGenerated(current.candidate))) { event.preventDefault(); void decide('LIKE') } }} onPointerDown={event => { gesture.current = null; if (!(event.target as HTMLElement).closest('button, a, input, textarea')) gesture.current = { x: event.clientX, y: event.clientY } }} onPointerCancel={() => { gesture.current = null }} onPointerUp={event => { const start = gesture.current; gesture.current = null; if (start && Math.abs(event.clientX - start.x) > 90 && Math.abs(event.clientY - start.y) < 70 && (event.clientX < start.x || visible || isGenerated(current.candidate))) void decide(event.clientX > start.x ? 'LIKE' : 'PASS') }}><div className="card-top"><span className="avatar">{current.candidate.displayName.split(' ').slice(0, 2).map(name => name[0]).join('')}</span><div className="score">{current.compatibility !== undefined && <><strong>{current.compatibility}%</strong><span>compatibility score</span></>}</div></div><div className="chips identity-badges"><span>{current.candidate.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'}</span><span>{current.candidate.matchingIntent.toLowerCase()}</span></div><h2>{current.candidate.displayName}</h2><p>{current.candidate.role}</p><p>{current.candidate.description}</p>{isGenerated(current.candidate) ? <p className="note">No GitHub connected</p> : <button className="text-button" onClick={() => setPerson(current.candidate.id)}>View full profile & GitHub</button>}<h3>Offers</h3><div className="chips">{current.candidate.skills.map(skill => <span key={skill}>{skill}</span>)}</div><h3>Needs</h3><p>{current.candidate.neededSkills.join(', ') || 'Open to complementary skills'}</p><p>{current.candidate.goal} · {current.candidate.weeklyHours} hours / week</p><p>{current.candidate.interests.join(' · ')}</p><div className="onboarding-controls"><button className="secondary" disabled={busy} onClick={() => void decide('PASS')}>Pass</button><button disabled={busy || (!visible && !isGenerated(current.candidate))} onClick={() => void decide('LIKE')}>{busy ? 'Saving…' : 'Like collaborator ♥'}</button></div><p className="note">{index + 1} of {results.length}. Real choices are saved. Demo account swipes stay in this session and cannot create matches.</p></article><section className="explanation"><span className="eyebrow">WHY YOU CONNECT</span><h2>Shared potential.</h2><ul>{current.evidence.map(text => <li key={text}>{text}</li>)}</ul><p className="note">Compatibility is a heuristic score, not a prediction of a successful partnership.</p></section></div>}
-    {!loading && !error && !current && <section className="preview"><h2>{results.length ? 'You’ve explored this batch.' : 'Your network is just getting started.'}</h2><p>{results.length ? 'Refresh to discover again.' : 'No more profiles in this browsing batch. Real matches require opted-in people above 50% compatibility; generated accounts cannot match.'}</p><button onClick={() => setAttempt(value => value + 1)}>Refresh discovery</button></section>}
+    {!loading && !error && !current && <section className="preview"><h2>{results.length ? 'You’ve explored this batch.' : 'Your network is just getting started.'}</h2><p>{sampleMore ? 'More profiles are ready to explore.' : 'Refresh to discover again. Real matches require mutual likes; demo accounts are browse-only.'}</p>{sampleMore ? <button disabled={busy} onClick={() => void moreProfiles()}>{busy ? 'Loading…' : 'Load more profiles'}</button> : <button onClick={() => setAttempt(value => value + 1)}>Refresh discovery</button>}</section>}
     {limited && <p className="note">This preview ranks up to 200 recently updated visible profiles. Generated accounts are browse-only and do not count as members.</p>}
   </section>
 }

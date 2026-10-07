@@ -9,3 +9,7 @@ export function combineFeed<T>(real: T[], generated: T[]): T[] {
  }
  return feed
 }
+export function mergeRankedFeed<T>(current: T[], real: T[], interacted: boolean): T[] {
+ // Keep the current card and swipe position stable if ranking arrives late.
+ return interacted ? [...current, ...real] : combineFeed(real, current)
+}

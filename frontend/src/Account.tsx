@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { lazy, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { accountRequest } from './accountApi'
 import Onboarding from './Onboarding'
-import AccountSettings from './AccountSettings'
-import RecoveryPanel from './RecoveryPanel'
-import ModerationPanel from './ModerationPanel'
+const AccountSettings = lazy(() => import('./AccountSettings'))
+const RecoveryPanel = lazy(() => import('./RecoveryPanel'))
+const ModerationPanel = lazy(() => import('./ModerationPanel'))
 import type { ProfileDraft } from './profile'
 
 type AccountView = { id: string; email: string; accountType: 'REAL' }

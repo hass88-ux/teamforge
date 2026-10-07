@@ -88,14 +88,22 @@ class CollaborationController {
  @GetMapping("/api/matches")
  List<MatchView> matches(Authentication auth) {
   UUID actor=owner(auth);
-  return transaction.execute(state -> sql.query("SELECT id,member_a,member_b,compatibility,created_at FROM collaboration_matches WHERE closed_at IS NULL AND (member_a=? OR member_b=?) ORDER BY created_at DESC,id LIMIT 100 FOR UPDATE",(row,n) -> {
+  // One statement gives a consistent authorized snapshot without per-match round trips.
+  return sql.query("""
+   SELECT m.id,m.member_a,m.member_b,m.compatibility,m.created_at,p.profile_json,
+    COALESCE((SELECT body FROM collaboration_messages WHERE match_id=m.id ORDER BY sequence_id DESC LIMIT 1),'') AS last_message,
+    (SELECT COUNT(*) FROM collaboration_messages msg WHERE msg.match_id=m.id AND msg.sender_id<>? AND msg.sequence_id>COALESCE((SELECT last_sequence FROM match_reads WHERE match_id=m.id AND account_id=?),0)) AS unread_count
+   FROM collaboration_matches m
+   JOIN profiles p ON p.account_id=CASE WHEN m.member_a=? THEN m.member_b ELSE m.member_a END
+   WHERE m.closed_at IS NULL AND (m.member_a=? OR m.member_b=?)
+   ORDER BY m.created_at DESC,m.id LIMIT 100
+   """,(row,n) -> {
    UUID other=actor.equals(row.getObject("member_a",UUID.class))?row.getObject("member_b",UUID.class):row.getObject("member_a",UUID.class);
-   var profile=draft(profiles.findById(other).orElseThrow(() -> error(404)));
+   OnboardingController.ProfileDraft profile;
+   try { profile=json.readValue(row.getString("profile_json"),OnboardingController.ProfileDraft.class); } catch (Exception ex) { throw error(500); }
    UUID match=row.getObject("id",UUID.class);
-   var preview=sql.query("SELECT body FROM collaboration_messages WHERE match_id=? ORDER BY sequence_id DESC LIMIT 1",(r,i)->r.getString(1),match);
-   long unread=sql.queryForObject("SELECT COUNT(*) FROM collaboration_messages WHERE match_id=? AND sender_id<>? AND sequence_id>COALESCE((SELECT last_sequence FROM match_reads WHERE match_id=? AND account_id=?),0)",Long.class,match,actor,match,actor);
-   return new MatchView(match,other,profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant(),preview.isEmpty()?"":preview.getFirst(),unread);
-  },actor,actor));
+   return new MatchView(match,other,profile.displayName(),profile.entityType(),profile.matchingIntent(),row.getInt("compatibility"),row.getTimestamp("created_at").toInstant(),row.getString("last_message"),row.getLong("unread_count"));
+  },actor,actor,actor,actor,actor);
  }
  @GetMapping("/api/matches/{match}/messages")
  Map<String,Object> messages(@PathVariable UUID match,@RequestParam(defaultValue="0") long after,Authentication auth) {

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { domains, emptyProfile, goals, roles, skills, stepIsComplete, styles } from './profile'
 import type { ProfileDraft } from './profile'
-import Discover from './Discover'
+const Discover = lazy(() => import('./Discover'))
 import RealDiscover from './RealDiscover'
-import Projects from './Projects'
-import RealProjects from './RealProjects'
+const Projects = lazy(() => import('./Projects'))
+const RealProjects = lazy(() => import('./RealProjects'))
 import Dashboard from './Dashboard'
 import DescriptionSkills from './DescriptionSkills'
 import { accountRequest } from './accountApi'

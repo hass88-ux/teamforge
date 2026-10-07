@@ -4,6 +4,7 @@
 <groupId>com.teamforge</groupId><artifactId>teamforge-api</artifactId><version>0.1.0-SNAPSHOT</version>
 <properties><java.version>21</java.version></properties>
 <dependencies>
+<dependency><groupId>org.springframework.session</groupId><artifactId>spring-session-jdbc</artifactId></dependency>
 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
 <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-security</artifactId></dependency>
 <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>

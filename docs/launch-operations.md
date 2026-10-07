@@ -28,7 +28,7 @@ Production setup still pending: securely configure the client tools and credenti
 
 `python scripts/acceptance-smoke.py https://teamforge-jq44.onrender.com` creates exactly two uniquely named disposable accounts. It only interacts with those account IDs, checks ranking/privacy, mutual consent, message retries, read state, coffee plans, projects/tasks, stale writes, report restrictions, export, blocking, recovery and session revocation, then deletes its fixtures. Never substitute real credentials or run destructive backend test suites against production.
 
-Remaining walkthrough: actual phone and desktop signup, discovery swipes, conversations/projects, keyboard accessibility, and Help/privacy. Ask a second person to try the app and report errors before opening general signup promotion. Free Render can sleep and takes time to start; this remains a single-instance service with restart-expiring sessions. Preserve a rollback commit and deploy via the existing GitHub workflow.
+Remaining walkthrough: actual phone and desktop signup, discovery swipes, conversations/projects, keyboard accessibility, and Help/privacy. Ask a second person to try the app and report errors before opening general signup promotion. Free Render can sleep and takes time to start; this remains a single-instance service. Hosted sessions are now persisted in Neon and expire after 30 minutes of inactivity. Existing memory-only sessions cannot migrate during this first rollout, so users need to sign in once after deployment. Preserve a rollback commit and deploy via the existing GitHub workflow.
 
 ## Go/no-go
 
@@ -40,3 +40,7 @@ Remaining walkthrough: actual phone and desktop signup, discovery swipes, conver
 - Final mobile/desktop walkthrough and a second-person trial pass.
 
 Keep status as preview until these checks are verified. A functioning app is not evidence that operational gates are complete. No trained model is required for this launch: ship the existing explained rules-based matching and avoid unsupported AI performance claims.
+
+## Persistent session rollout
+
+Migration V10 adds session tables and indexes without changing application records. PostgreSQL holds session attributes including security context and CSRF state; treat database dumps as sensitive and encrypted. Expired sessions are cleaned every ten minutes. Cookie security remains Secure, HttpOnly and SameSite=Lax. The credential filter revokes recovered/deleted account sessions on their next request. Rollback application code if needed; leave the additive tables intact. Existing backup tools include these tables automatically, but manual production backup setup remains outstanding.

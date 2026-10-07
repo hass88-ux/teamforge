@@ -59,13 +59,19 @@ class DiscoveryController {
   if (response == null || !"REAL".equals(response.get("accountType")) || !(response.get("recommendations") instanceof List<?> ranked)) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
   Map<String,Map<String,Object>> allowed=new HashMap<>();
   for (var candidate:candidates) allowed.put((String)candidate.get("id"),candidate);
+  // Recheck after inference in two batch reads, rather than two queries per result.
+  var currentProfiles=new HashMap<UUID,StoredProfile>();
+  profiles.findAllById(allowed.keySet().stream().map(UUID::fromString).toList()).forEach(p -> currentProfiles.put(p.accountId,p));
+  var currentExcluded=decisions.targets(owner.id);
   List<Map<String,Object>> result=new ArrayList<>();
   for (Object entry:ranked) {
    if (!(entry instanceof Map<?,?> item) || !(item.get("candidate") instanceof Map<?,?> candidate)) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
    var original=allowed.get(candidate.get("id"));
-   if (original == null || !(item.get("compatibility") instanceof Number number) || number.doubleValue() <= 50) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
+   if (original == null || !(item.get("compatibility") instanceof Number number) || !Double.isFinite(number.doubleValue()) || number.doubleValue() > 100 || number.doubleValue() <= 50) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
    // Recheck visibility after inference, so a withdrawn profile isn't returned from a stale snapshot.
-   if (!profiles.findById(UUID.fromString((String)original.get("id"))).map(p -> p.discoverable).orElse(false) || decisions.blocked(owner.id,UUID.fromString((String)original.get("id")))) continue;
+   UUID candidateId=UUID.fromString((String)original.get("id"));
+   var current=currentProfiles.get(candidateId);
+   if (current==null || !current.discoverable || currentExcluded.contains(candidateId)) continue;
    Map<String,Object> publicProfile=new LinkedHashMap<>();
    publicProfile.put("id",original.get("id")); publicProfile.put("accountType","REAL");
    for (String field:PUBLIC_FIELDS) publicProfile.put(field,original.get(field));

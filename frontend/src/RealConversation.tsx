@@ -20,6 +20,12 @@ export default function RealConversation({ match, onBack, onUnmatched, backLabel
   const [confirmEnd, setConfirmEnd] = useState(false)
   const pending = useRef<{ clientId: string; text: string } | null>(null)
   const cursor = useRef(0)
+  const acknowledged = useRef(0)
+  const idlePolls = useRef(0)
+  const acknowledge = useCallback(async (sequence: number) => {
+    if (document.visibilityState !== 'visible' || sequence <= acknowledged.current) return
+    try { const response = await accountRequest(`/api/matches/${match.id}/read`, 'POST', { sequence }); if (response.ok) acknowledged.current = Math.max(acknowledged.current, sequence) } catch { /* Retry acknowledgement on the next successful poll. */ }
+  }, [match.id])
   const load = useCallback(async () => {
     if (polling.current) return; polling.current = true
     setLoading(true); setError('')
@@ -28,19 +34,24 @@ export default function RealConversation({ match, onBack, onUnmatched, backLabel
       if (!response.ok) throw new Error(response.status === 404 ? 'This conversation is no longer available.' : response.status === 401 ? 'Your session expired. Please log in again.' : 'Cannot load messages. Please try again.')
       const result = await response.json()
       setMessages(current => [...current, ...result.messages.filter((message: Message) => !current.some(item => item.sequence === message.sequence))].sort((a, b) => a.sequence - b.sequence))
-      cursor.current = result.nextAfter; setHasMore(result.hasMore); if (document.visibilityState === 'visible') void accountRequest(`/api/matches/${match.id}/read`, 'POST', { sequence: result.nextAfter }).catch(() => {})
+      idlePolls.current = result.nextAfter > cursor.current ? 0 : idlePolls.current + 1; cursor.current = result.nextAfter; setHasMore(result.hasMore); void acknowledge(result.nextAfter)
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }
     finally { setLoading(false); polling.current = false }
-  }, [match.id])
+  }, [match.id, acknowledge])
   useEffect(() => {
     let active = true
     accountRequest(`/api/matches/${match.id}/messages?after=0`).then(async response => {
       if (!response.ok) throw new Error(response.status === 404 ? 'This conversation is no longer available.' : 'Cannot load messages. Please try again.')
       return response.json()
-    }).then(result => { if (active) { setMessages(result.messages); cursor.current = result.nextAfter; setHasMore(result.hasMore); if (document.visibilityState === 'visible') void accountRequest(`/api/matches/${match.id}/read`, 'POST', { sequence: result.nextAfter }).catch(() => {}) } }).catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }).finally(() => { if (active) setLoading(false) })
+    }).then(result => { if (active) { setMessages(result.messages); idlePolls.current = result.nextAfter > cursor.current ? 0 : idlePolls.current + 1; cursor.current = result.nextAfter; setHasMore(result.hasMore); void acknowledge(result.nextAfter) } }).catch(failure => { if (active) setError(failure instanceof Error ? failure.message : 'Cannot reach messages.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [match.id])
-  useEffect(() => { const timer = window.setInterval(() => { if (!busy && !loading && !viewProfile && document.visibilityState === 'visible') void load() }, 15000); return () => clearInterval(timer) }, [busy, loading, viewProfile, load])
+  }, [match.id, acknowledge])
+  useEffect(() => {
+    const timer = window.setInterval(() => { if (!busy && !loading && !viewProfile && document.visibilityState === 'visible') void load() }, idlePolls.current >= 3 ? 30000 : 15000)
+    function focus() { if (!busy && !viewProfile && document.visibilityState === 'visible') { idlePolls.current = 0; void load() } }
+    document.addEventListener('visibilitychange', focus); window.addEventListener('focus', focus)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', focus); window.removeEventListener('focus', focus) }
+  }, [busy, loading, viewProfile, load])
   async function send(event: FormEvent) {
     event.preventDefault()
     if (busy || !text.trim()) return
@@ -66,7 +77,7 @@ export default function RealConversation({ match, onBack, onUnmatched, backLabel
     finally { setBusy(false) }
   }
   if (viewProfile) return <PublicProfile id={match.partnerId} onBack={() => setViewProfile(false)}/>
-  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>{backLabel}</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><button className="text-button" onClick={() => setViewProfile(true)}>View collaborator profile</button><p className="note">Messages are saved to your conversation. Only the two matched members can access them. New replies refresh automatically every 15 seconds while this screen is visible; you can also refresh manually.</p>
+  return <section className="conversation"><div className="onboarding-top"><span className="demo-label">YOUR CONVERSATION</span><button className="text-button" onClick={onBack}>{backLabel}</button></div><h1>Say hello to <em>{match.displayName}.</em></h1><p>{match.entityType === 'ORGANIZATION' ? 'Organization' : 'Individual'} · {match.matchingIntent.toLowerCase()} · {match.compatibility}% compatibility when matched</p><button className="text-button" onClick={() => setViewProfile(true)}>View collaborator profile</button><p className="note">Messages are saved to your conversation. Only the two matched members can access them. New replies refresh automatically every 15–30 seconds while this screen is visible; you can also refresh manually.</p>
     {error && <p className="error" role="alert">{error}</p>}
     <div className="message-list" role="log" aria-label="Conversation messages" aria-live="polite">{!loading && !messages.length && <p>Introduce yourself and share something you’d like to build.</p>}{messages.map(message => <article key={message.sequence} className={`message ${message.fromYou ? 'you' : 'received'}`}><strong>{message.fromYou ? 'You' : match.displayName}</strong><p>{message.text}</p><time dateTime={message.sentAt}>{new Date(message.sentAt).toLocaleString()}</time></article>)}</div>
     <button className="secondary" disabled={loading || busy} onClick={() => void load()}>{loading ? 'Loading…' : hasMore ? 'Load more messages' : 'Refresh messages'}</button>

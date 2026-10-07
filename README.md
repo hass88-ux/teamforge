@@ -46,7 +46,7 @@ No public deployment, real-user metrics, learned-model evaluation, or production
 
 ## Local accounts
 
-Signup and login use the Java backend and a local file-backed H2 database. Credentials and profile records are not committed. Sessions are held in server memory; a backend restart logs you out, while accounts/profiles remain on disk. Demo remains separate and temporary.
+Signup and login use the Java backend and a local file-backed H2 database. Credentials and profile records are not committed. Local sessions are held in server memory; a local backend restart logs you out, while accounts/profiles remain on disk. Hosted production sessions now persist in PostgreSQL. Demo remains separate and temporary.
 
 For future PostgreSQL deployment, activate Spring profile `production` and set `DATABASE_URL` to a JDBC PostgreSQL URL, `DATABASE_USER`, and `DATABASE_PASSWORD`. HTTPS is required because production cookies are Secure. PostgreSQL integration and public deployment have not been verified yet. Never commit these environment values.
 
@@ -102,7 +102,7 @@ Workspace polish: conversations opened from the dashboard now name their return 
 
 Free-hosting preparation: a combined frontend/Java/private-Python Docker image and Render Free configuration are implemented. CI successfully built and started the image within a 512 MiB limit, served the frontend, denied anonymous account export, and reached Python skill suggestions through Java. Proposed persistent database: Neon Free. See [free hosting](docs/free-hosting.md) for limits and setup. No cloud resource or paid service has been created.
 
-October 7 hosted checkpoint: Render Free connected to Neon Free PostgreSQL 16; all eight migrations applied and the service reached Live. The free service sleeps when idle and sessions reset on restart. This is a development preview; staffed moderation, production backup operations and full beta acceptance remain outstanding. No payment details or paid plans were added.
+October 7 hosted checkpoint: Render Free connected to Neon Free PostgreSQL 16; all eight migrations applied and the service reached Live. The free service sleeps when idle. Hosted session persistence was added in the October 7 performance update. This is a development preview; staffed moderation, production backup operations and full beta acceptance remain outstanding. No payment details or paid plans were added.
 
 Signed-in discovery now interleaves real recommendations with an 800-profile generated pool. Generated profiles have realistic unique names and a demo disclosure in their descriptions, with no separate badge. Their swipes are temporary, never create likes/matches/messages, and do not persist as real accounts. Real compatibility scores and reciprocal consent still apply only to real recommendations. Samples page in batches of 40 and retain intent exclusions; they carry no invented compatibility percentages.
 
@@ -111,3 +111,7 @@ Launch preparation: private report review now supports audited dismissal and mat
 Discovery refresh now restores the selected workspace view and loads generated profiles independently of real ranking failures. A persistent workspace navigation bar and dashboard counts make discovery, projects and profile controls accessible from the top; dashboard counts reflect actual account records only.
 
 Signed-in navigation now shows Sign out in the main header and places workspace tabs directly beneath it. The signed-in email strip is removed; Download my data is available in Account settings.
+
+## October 7 design and performance update
+
+The workspace now uses compact navigation, a clearer first-project dashboard, mobile discovery cards, expandable privacy controls, and stable loading placeholders. Discovery displays generated browse-only accounts before slow real ranking completes and prefetches the next page. Optional screens load on demand; external font requests were removed. Hosted sessions persist in PostgreSQL through server restarts with a 30-minute idle expiry, secure cookies, CSRF protection, and credential revocation. Local development retains servlet sessions. Match previews and unread counts use one database statement; dashboard project summaries avoid loading full member lists, and ranking visibility/block checks are batched. Conversation polling slows when idle and acknowledges only newer message cursors. Request timeouts never automatically replay writes. Free hosting cold starts remain possible.

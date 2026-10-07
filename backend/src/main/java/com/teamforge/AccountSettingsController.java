@@ -36,12 +36,13 @@ class AccountSettingsController {
    var keys=sql.queryForList("SELECT key_hash FROM recovery_keys WHERE account_id=?",id);
    if (keys.isEmpty() || !MessageDigest.isEqual(hash(r.key()).getBytes(StandardCharsets.UTF_8),((String)keys.getFirst().get("key_hash")).getBytes(StandardCharsets.UTF_8))) throw error(400);
    sql.update("UPDATE accounts SET password_hash=? WHERE id=?",passwords.encode(r.password()),id); sql.update("DELETE FROM recovery_keys WHERE account_id=?",id);
+   sql.update("DELETE FROM spring_session WHERE principal_name=?",r.email().trim().toLowerCase(Locale.ROOT));
   });
  }
  @PostMapping("/api/account/delete") @ResponseStatus(HttpStatus.NO_CONTENT)
  void delete(@Valid @RequestBody Password p,Authentication authentication,HttpServletRequest request) {
   auth.throttle(request); UUID actor=collaboration.owner(authentication);
-  tx.executeWithoutResult(s->{ verify(actor,p.password()); sql.update("DELETE FROM accounts WHERE id=?",actor); });
+  tx.executeWithoutResult(s->{ verify(actor,p.password()); sql.update("DELETE FROM spring_session WHERE principal_name=?",authentication.getName()); sql.update("DELETE FROM accounts WHERE id=?",actor); });
   request.getSession().invalidate();
  }
  @GetMapping("/api/account/blocks") List<Map<String,Object>> blocks(Authentication authentication) { return sql.queryForList("SELECT b.target_id, b.created_at FROM account_blocks b WHERE actor_id=? ORDER BY created_at",collaboration.owner(authentication)); }
