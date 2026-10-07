@@ -17,6 +17,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/demo")
 class DemoRecommendationController {
  private final RestClient ai;
+ @GetMapping("/samples")
+ Map<?, ?> samples(@RequestParam(defaultValue="0") int offset) {
+  if (offset < 0 || offset > 800) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+  try { return ai.get().uri("/profiles/samples?offset={offset}",offset).retrieve().body(Map.class); }
+  catch (RestClientException ex) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE); }
+ }
  DemoRecommendationController(@Value("${teamforge.ai-url:http://127.0.0.1:8001}") String aiUrl) {
   var factory = new SimpleClientHttpRequestFactory();
   factory.setConnectTimeout(Duration.ofSeconds(3));

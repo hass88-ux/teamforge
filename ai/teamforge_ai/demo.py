@@ -52,6 +52,23 @@ def generate_profiles(count=600, seed=41):
 
 PROFILES = generate_profiles()
 
+# Browsing examples are isolated from reciprocal matches and persisted accounts.
+SAMPLE_PROFILES = generate_profiles(800)
+for index, person in enumerate(SAMPLE_PROFILES):
+    first = (FIRST + ['Omer', 'Hassan', 'Aisha', 'Fatima', 'Sofia', 'Daniel', 'Hana', 'Yusuf'])[index % 36]
+    last = (LAST + ['Mushtaq', 'Ahmed', 'Khan', 'Hussain'])[index // 36 % 26]
+    person.update(id=f'sample-{index:03d}', displayName=f'{first} {last}', entityType='INDIVIDUAL', description=person['description'] + f" Project: {person['projects'][0]['name']}." + ' Demo account — generated profile; matches and messaging are unavailable.')
+
+SAMPLE_PROFILES[0]['displayName'] = 'Omer Mushtaq'
+SAMPLE_PROFILES[1]['displayName'] = 'Alex Lee'
+SAMPLE_PROFILES[360]['displayName'] = 'Alex Kim'
+
+def sample_page(offset=0):
+    fields = ('id', 'displayName', 'entityType', 'matchingIntent', 'role', 'description', 'skills', 'neededSkills', 'interests', 'goal', 'weeklyHours')
+    return {'accountType': 'SAMPLE', 'total': len(SAMPLE_PROFILES), 'offset': offset,
+            'profiles': [{**{key: item[key] for key in fields}, 'accountType': 'DEMO'} for item in SAMPLE_PROFILES[offset:offset + 40]],
+            'hasMore': offset + 40 < len(SAMPLE_PROFILES)}
+
 
 def recommendations(profile):
     candidates = list(PROFILES)

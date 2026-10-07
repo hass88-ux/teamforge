@@ -10,6 +10,23 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
 
 class DemoRecommendationControllerTest {
+ @Test void samplePagesAreBoundedAndForwardedWithoutCreatingAccounts() throws Exception {
+  var server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
+  var query=new AtomicReference<String>();
+  server.createContext("/profiles/samples",exchange->{
+   query.set(exchange.getRequestURI().getQuery());
+   var bytes="{\"accountType\":\"SAMPLE\",\"total\":800,\"profiles\":[],\"hasMore\":false}".getBytes(StandardCharsets.UTF_8);
+   exchange.getResponseHeaders().set("Content-Type","application/json"); exchange.sendResponseHeaders(200,bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
+  });
+  server.start();
+  try {
+   var controller=new DemoRecommendationController("http://127.0.0.1:"+server.getAddress().getPort());
+   assertThat(controller.samples(760).get("total")).isEqualTo(800);
+   assertThat(query.get()).isEqualTo("offset=760");
+   assertThatThrownBy(()->controller.samples(-1)).isInstanceOfSatisfying(ResponseStatusException.class,e->assertThat(e.getStatusCode().value()).isEqualTo(400));
+   assertThatThrownBy(()->controller.samples(801)).isInstanceOfSatisfying(ResponseStatusException.class,e->assertThat(e.getStatusCode().value()).isEqualTo(400));
+  } finally { server.stop(0); }
+ }
  @Test void forwardsTeamConstraintsAndRejectsDuplicateRoles() throws Exception {
   var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
   var requestBody = new AtomicReference<String>();

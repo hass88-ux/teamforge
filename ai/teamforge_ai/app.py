@@ -1,12 +1,17 @@
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel, Field, field_validator
 from .demo import recommendations
 from .demo import PROFILES
 from .teams import recommend_team
 
 app = FastAPI(title='TeamForge recommendations', docs_url=None, redoc_url=None)
+
+@app.get('/profiles/samples')
+def samples(offset: Annotated[int, Query(ge=0, le=800)] = 0):
+    from .demo import sample_page
+    return sample_page(offset)
 class DescriptionRequest(BaseModel):
     description: Annotated[str, Field(min_length=1, max_length=1000)]
 
