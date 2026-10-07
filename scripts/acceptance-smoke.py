@@ -40,7 +40,8 @@ class Client:
             if status != expected:
                 raise RuntimeError(f'{method} {path}: expected {expected}, received {status}')
             raw = response.read()
-            return json.loads(raw) if raw and response.headers.get_content_type() == 'application/json' else None
+            content_type = response.headers.get_content_type()
+            return json.loads(raw) if raw and (content_type == 'application/json' or content_type.endswith('+json')) else None
 
     def login(self):
         self.request('/api/auth/login', 'POST', {'email': self.email, 'password': self.password})
