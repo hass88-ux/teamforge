@@ -20,12 +20,14 @@ Final walkthrough to repeat before release:
 - Export, private recovery key, session revocation, blocks and account deletion using disposable test fixtures only.
 - Narrow mobile and desktop layouts, keyboard navigation, focus indicators, Help dialog dismissal and long-text wrapping.
 
-Public beta gates still pending:
+Public beta gates (current status on October 7):
 
-- Free hosting/database limits verified and acceptable, with no payment commitment.
-- Deployed PostgreSQL credentials and private recommendation routing configured.
-- HTTPS, Secure cookies, same-origin assets/API and restart behavior checked in the deployed environment.
-- Production backup storage, retention and restore drill established.
-- Report-review responsibility and public privacy/contact information established.
+- Verified: Render Free and Neon Free deployed without payment details; private recommendation routing configured.
+- Verified: HTTPS, Secure cookies, same-origin assets/API, persistent profile save/login/export and test-account cleanup.
+- Pending: production backup storage, daily execution and actual restore drill. Encryption and isolated restore tooling are implemented.
+- Pending: report-review responsibility and owner moderator access. A restricted review queue is implemented; support contact is published.
+- Pending: final deployed walkthrough and second-person trial.
+
+See [launch operations](launch-operations.md) for the remaining owner setup, runbooks and acceptance command.
 
 Passing CI is evidence for the tested workflows, not proof that these public beta gates are complete.

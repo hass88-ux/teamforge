@@ -23,6 +23,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:8080/ | grep 'id="root"'
           test "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/account/export)" = 401
           curl --fail --silent -H 'Content-Type: application/json' -d '{"description":"I can provide Java skills"}' http://127.0.0.1:8080/api/onboarding/skills
+          python3 scripts/acceptance-smoke.py http://127.0.0.1:8080
           docker stats --no-stream teamforge-preview
   postgres:
     runs-on: ubuntu-latest
@@ -55,11 +56,20 @@ jobs:
         run: |
           container='${{ job.services.postgres.id }}'
           docker exec "$container" pg_dump -U teamforge_tests -d teamforge_tests -Fc -f /tmp/teamforge-tests.dump
+          docker cp "$container":/tmp/teamforge-tests.dump /tmp/teamforge-tests.dump
+          TEAMFORGE_BACKUP_PASSPHRASE=disposable-ci-backup-passphrase-only pwsh -File scripts/protect-backup.ps1 -Mode Encrypt -InputPath /tmp/teamforge-tests.dump -OutputPath /tmp/teamforge-tests.tfaes
+          TEAMFORGE_BACKUP_PASSPHRASE=disposable-ci-backup-passphrase-only pwsh -File scripts/protect-backup.ps1 -Mode Decrypt -InputPath /tmp/teamforge-tests.tfaes -OutputPath /tmp/teamforge-restored.dump
+          cmp /tmp/teamforge-tests.dump /tmp/teamforge-restored.dump
+          docker cp /tmp/teamforge-restored.dump "$container":/tmp/teamforge-tests.dump
           docker exec "$container" createdb -U teamforge_tests teamforge_restore_tests
           docker exec "$container" pg_restore -U teamforge_tests -d teamforge_restore_tests --exit-on-error /tmp/teamforge-tests.dump
           migrations=$(docker exec "$container" psql -U teamforge_tests -d teamforge_restore_tests -Atc 'SELECT count(*) FROM flyway_schema_history WHERE success')
-          test "$migrations" -eq 8
+          expected=$(find backend/src/main/resources/db/migration -name 'V*__*.sql' | wc -l)
+          test "$migrations" -eq "$expected"
           docker exec "$container" psql -U teamforge_tests -d teamforge_restore_tests -v ON_ERROR_STOP=1 -c 'SELECT count(*) FROM accounts; SELECT count(*) FROM project_tasks; SELECT count(*) FROM collaboration_messages;'
+      - name: Check backup tamper protection
+        shell: pwsh
+        run: ./scripts/test-backup-protection.ps1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
