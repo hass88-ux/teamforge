@@ -1,6 +1,6 @@
 # Launch operations — October 7
 
-Target: public launch within two days. Live app: https://teamforge-jq44.onrender.com. Support/privacy contact: muhammadhassamir888@gmail.com.
+Target: public launch within two days. Live app: https://teamforge-jq44.onrender.com. Support/privacy contact: muhammadhassanamir888@gmail.com.
 
 ## Report review
 

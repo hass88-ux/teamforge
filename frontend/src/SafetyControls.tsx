@@ -23,7 +23,7 @@ export default function SafetyControls({ matchId, targetId, onBlocked }: { match
    const r = await accountRequest('/api/safety/reports', 'POST', { ...draft, clientId: retry.current.id })
    if (!r.ok) throw new Error(r.status === 429 ? 'Report limit reached. Try again tomorrow. Blocking is still available.' : 'Cannot record this report. Please try again.')
    const result = await r.json()
-   setNotice(`Report recorded: ${result.id}. Your report is private. For support, email muhammadhassamir888@gmail.com. Block this person if you want to end contact now.`); setShowReport(false)
+   setNotice(`Report recorded: ${result.id}. Your report is private. For support, email muhammadhassanamir888@gmail.com. Block this person if you want to end contact now.`); setShowReport(false)
   } catch (e) { setError(e instanceof Error ? e.message : 'Cannot save report.') }
   finally { setBusy(false) }
  }
