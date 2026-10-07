@@ -23,6 +23,7 @@ class PersistentSessionTest {
  @Autowired JdbcTemplate sql;
  @Autowired PlatformTransactionManager manager;
  @Autowired ObjectMapper json;
+ @Autowired org.springframework.session.web.http.DefaultCookieSerializer cookies;
  private final HttpClient client=HttpClient.newHttpClient();
  record Login(String cookie,String id,String email) {}
  HttpResponse<String> request(String path,String method,String body,String cookie,String token) throws Exception {
@@ -74,5 +75,14 @@ class PersistentSessionTest {
   assertThat(sql.queryForObject("SELECT COUNT(*) FROM spring_session WHERE principal_name=?",Long.class,login.email())).isZero();
   assertThat(sql.queryForObject("SELECT COUNT(*) FROM spring_session_attributes WHERE session_primary_id NOT IN (SELECT primary_id FROM spring_session)",Long.class)).isZero();
   assertThat(request("/api/auth/me","GET",null,login.cookie(),null).statusCode()).isEqualTo(401);
+ }
+ @Test void legacyAndMalformedCookiesNeverReachDatabaseSessionLookup() throws Exception {
+  for (String value:List.of("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "not-a-cookie", Base64.getEncoder().encodeToString(new byte[36]))) {
+   var request=new org.springframework.mock.web.MockHttpServletRequest();
+   request.setCookies(new jakarta.servlet.http.Cookie("JSESSIONID",value));
+   assertThat(cookies.readCookieValues(request)).isEmpty();
+   assertThat(request("/api/auth/me","GET",null,"JSESSIONID="+value,null).statusCode()).isEqualTo(401);
+   assertThat(request("/api/auth/csrf","GET",null,"JSESSIONID="+value,null).statusCode()).isEqualTo(200);
+  }
  }
 }
