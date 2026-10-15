@@ -115,3 +115,7 @@ Signed-in navigation now shows Sign out in the main header and places workspace 
 ## October 7 design and performance update
 
 The workspace now uses compact navigation, a clearer first-project dashboard, mobile discovery cards, expandable privacy controls, and stable loading placeholders. Discovery displays generated browse-only accounts before slow real ranking completes and prefetches the next page. Optional screens load on demand; external font requests were removed. Hosted sessions persist in PostgreSQL through server restarts with a 30-minute idle expiry, secure cookies, CSRF protection, and credential revocation. Local development retains servlet sessions. Match previews and unread counts use one database statement; dashboard project summaries avoid loading full member lists, and ranking visibility/block checks are batched. Conversation polling slows when idle and acknowledges only newer message cursors. Request timeouts never automatically replay writes. Free hosting cold starts remain possible.
+
+## October 15 workspace additions
+
+The dashboard includes a Needs your attention section linking unread conversations, pending project invitations, and proposed coffee chats to their existing controls. Search filters loaded conversations by person/message and projects by name/stage without extra API requests. Search excludes older message history and projects outside the dashboard response limits. Brevo email verification remains pending provider setup and integration.
