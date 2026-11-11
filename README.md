@@ -2,7 +2,32 @@
 
 Find the people you should build with.
 
-TeamForge is being built as a collaborator matchmaking platform with structured, reciprocal recommendations. This repository has a working local demo and is still in development. A free hosted development preview is available at https://teamforge-jq44.onrender.com. No real-user traction is claimed.
+TeamForge is a full-stack collaborator matchmaking platform with structured, reciprocal recommendations. [Open the live app](https://teamforge-teal.vercel.app/) or [inspect the CI checks](https://github.com/hass88-ux/teamforge/actions). This is a public preview; no real-user traction is claimed.
+
+## Review the product in three minutes
+
+1. Choose **Explore the live demo** for a complete sample profile without signup.
+2. Open discovery, inspect compatibility explanations, and try simulated matching and conversations.
+3. Create a demo project and inspect recommended role coverage or an honest infeasibility result.
+
+Choose **Build your own profile** for full onboarding. Real accounts start private; real conversations require genuine mutual likes.
+
+## Architecture
+
+| Layer | Implementation |
+| --- | --- |
+| Frontend | React, TypeScript, Vite on Vercel; same-origin API proxy |
+| API | Java 21, Spring Boot, Spring Security on Render |
+| Storage | Neon PostgreSQL hosted, H2 locally, Flyway migrations |
+| Ranking | Private Python/FastAPI weighted reciprocal scoring and demo-team search |
+| Security | BCrypt, secure HttpOnly sessions, CSRF, owner-scoped access |
+| Delivery | CI checks frontend, Java, PostgreSQL, Python, and the integrated container |
+
+November 11 baseline: **57 Java, 27 Python, and 13 frontend tests passed**. The complete disposable-account acceptance check also passed through Vercel, covering authentication, matching, messaging, projects, safety controls, export and recovery. See CI for current results. These checks are not a security certification or load test.
+
+Vercel serves the frontend; the Render Free API can still sleep. Demo interactions are simulations. Live ranking is a heuristic; an offline learned baseline underperformed and was not promoted. Brevo, OAuth, moderator activation, backup/restore operations and real-user evaluation remain unfinished. [Deployment](docs/vercel-deployment.md) · [Ranking design](docs/recommendation-system.md) · [Launch operations](docs/launch-operations.md).
+
+The sections below include historical implementation checkpoints; the current hosted architecture and validation summary above supersede earlier local-only deployment statements.
 
 ## Current implementation
 
