@@ -59,6 +59,22 @@ class RankingTests(unittest.TestCase):
         self.assertEqual(utc_slots(a, REFERENCE), utc_slots(b, REFERENCE))
         self.assertEqual(score(a, b, REFERENCE)['overlapHours'], 2)
 
+    def test_utc_monday_boundary_uses_the_same_week(self):
+        a = {**builder(), 'availability': [14, 15]}
+        b = {**a, 'timezone': 'UTC', 'availability': [18, 19]}
+        for reference in [datetime(2026, 9, 28, 0, tzinfo=timezone.utc), datetime(2026, 9, 30, tzinfo=timezone.utc)]:
+            self.assertEqual(score(a, b, reference)['overlapHours'], 2)
+
+    def test_recurring_hours_wrap_across_the_week_boundary(self):
+        a = {**builder(), 'availability': [164]}
+        b = {**a, 'timezone': 'UTC', 'availability': [0]}
+        self.assertEqual(score(a, b, REFERENCE)['overlapHours'], 1)
+
+    def test_nonexistent_dst_wall_hours_are_not_counted(self):
+        a = {**builder(), 'availability': [146]}
+        reference = datetime(2026, 3, 4, tzinfo=timezone.utc)
+        self.assertEqual(utc_slots(a, reference), set())
+
     def test_excludes_self_and_real_profiles(self):
         a = {**builder(), 'id': 'self'}
         self.assertEqual(rank(a, [{**a, 'accountType': 'DEMO'}, {**a, 'id': 'real', 'accountType': 'REAL'}]), [])

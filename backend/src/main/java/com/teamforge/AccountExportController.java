@@ -25,6 +25,7 @@ class AccountExportController {
   UUID actor=collaboration.owner(auth); var account=accounts.findById(actor).orElseThrow();
   var result=new LinkedHashMap<String,Object>();
   result.put("formatVersion",1); result.put("exportedAt",Instant.now());
+  result.put("recommendationFeedback",sql.queryForList("SELECT target_id,rating,model_version,compatibility,features_json,updated_at FROM recommendation_feedback WHERE actor_id=? ORDER BY updated_at,target_id",actor));
   result.put("account",Map.of("id",actor,"email",account.email,"accountType",account.accountType,"createdAt",account.createdAt));
   var profile=profiles.findById(actor);
   result.put("profile",profile.isEmpty()?null:Map.of("data",json.readTree(profile.get().profileJson),"discoverable",profile.get().discoverable,"updatedAt",profile.get().updatedAt));

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 WEIGHTS = {'roles': 25, 'skills': 20, 'interests': 20, 'availability': 15, 'commitment': 10, 'goal': 5, 'style': 5}
-MODEL_VERSION = 'weighted-reciprocal-v2'
+MODEL_VERSION = 'weighted-reciprocal-v2.1'
 
 
 def intent_compatible(a, b):
@@ -26,16 +26,24 @@ def fraction(a, b):
 
 
 def utc_slots(profile, reference):
-    """Compare the upcoming Monday-based week; recompute for DST changes."""
-    local = reference.astimezone(ZoneInfo(profile['timezone']))
-    monday = local.date() - timedelta(days=local.weekday())
+    """Use one UTC-selected calendar week for every profile, then convert wall hours.
+
+    Selecting local weeks independently can put timezones seven days apart.
+    Include neighbouring local weeks so recurring Sunday/Monday hours wrap
+    into the same UTC window; timezone/DST conversion still uses actual dates.
+    """
+    anchor = reference.astimezone(timezone.utc)
+    monday = anchor.date() - timedelta(days=anchor.weekday())
+    window_start = datetime.combine(monday, datetime.min.time(), timezone.utc)
+    window_end = window_start + timedelta(days=7)
     result = set()
     for slot in set(profile['availability']):
-        local_hour = datetime.combine(monday + timedelta(days=slot // 24), datetime.min.time(), ZoneInfo(profile['timezone'])) + timedelta(hours=slot % 24)
-        utc = local_hour.astimezone(timezone.utc)
-        # Skip nonexistent local wall hours during spring-forward.
-        if utc.astimezone(ZoneInfo(profile['timezone'])).replace(tzinfo=None) == local_hour.replace(tzinfo=None):
-            result.add(utc)
+        for week_shift in (-7, 0, 7):
+            local_hour = datetime.combine(monday + timedelta(days=slot // 24 + week_shift), datetime.min.time(), ZoneInfo(profile['timezone'])) + timedelta(hours=slot % 24)
+            utc = local_hour.astimezone(timezone.utc)
+            # Skip nonexistent local wall hours during spring-forward.
+            if window_start <= utc < window_end and utc.astimezone(ZoneInfo(profile['timezone'])).replace(tzinfo=None) == local_hour.replace(tzinfo=None):
+                result.add(utc)
     return result
 
 

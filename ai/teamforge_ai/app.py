@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 from .demo import recommendations
 from .demo import PROFILES
 from .teams import recommend_team
+from .ranking import MODEL_VERSION
 
 app = FastAPI(title='TeamForge recommendations', docs_url=None, redoc_url=None)
 
@@ -46,7 +47,7 @@ class Profile(BaseModel):
         return value
 
 @app.get('/health')
-def health(): return {'status': 'ok', 'modelVersion': 'weighted-reciprocal-v2'}
+def health(): return {'status': 'ok', 'modelVersion': MODEL_VERSION}
 
 @app.post('/recommendations/demo')
 def demo(profile: Profile):

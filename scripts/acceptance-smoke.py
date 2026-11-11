@@ -85,6 +85,15 @@ def run(base, health_base=None):
         item = next(item for item in ranked if item['candidate']['id'] == b.id)
         assert item['compatibility'] > 50
         assert not {'email', 'timezone', 'availability', 'password'} & item['candidate'].keys()
+        feedback = {'token': item['feedbackToken'], 'rating': 'RELEVANT'}
+        b.request('/api/discovery/feedback', 'POST', feedback, 409)
+        a.request('/api/discovery/feedback', 'POST', feedback, 204)
+        ratings = a.request('/api/account/export')['recommendationFeedback']
+        assert len(ratings) == 1 and ratings[0]['rating'] == 'RELEVANT'
+        assert ratings[0]['model_version'] == 'weighted-reciprocal-v2.1'
+        assert b.request('/api/account/export')['recommendationFeedback'] == []
+        a.request('/api/account/recommendation-feedback', 'DELETE', expected=204)
+        assert a.request('/api/account/export')['recommendationFeedback'] == []
         assert len(anonymous.request('/api/demo/samples?offset=760')['profiles']) == 40
         a.request('/api/discovery/decisions', 'POST', {'candidateId': 'sample-000', 'decision': 'LIKE'}, 400)
         assert a.request('/api/matches') == []

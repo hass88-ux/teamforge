@@ -35,7 +35,7 @@ class DiscoveryTest {
     for (var candidate:request.get("candidates")) {
      var item=recommendations.addObject(); item.set("candidate",candidate); item.put("compatibility",80);
      item.put("forwardScore",80); item.put("reverseScore",80); item.putArray("evidence").add("Shared project interests: Education.");
-     item.putObject("contributions").put("interests",20); item.put("modelVersion","test");
+     item.putObject("contributions").put("roles",25).put("skills",10).put("interests",20).put("availability",10).put("commitment",10).put("goal",5).put("style",0); item.put("modelVersion","weighted-reciprocal-v2");
     }
     byte[] bytes=JSON.writeValueAsBytes(result); exchange.getResponseHeaders().set("Content-Type","application/json");
     exchange.sendResponseHeaders(200,bytes.length); exchange.getResponseBody().write(bytes); exchange.close();
@@ -57,6 +57,13 @@ class DiscoveryTest {
  }
  @BeforeEach void setup() { fail=false; received=null; profiles.deleteAll(); accounts.deleteAll(); owner=account("Owner",false); }
  @AfterAll static void stop() { server.stop(0); }
+ @Test void feedbackOfferComesFromTheIssuedRecommendation() throws Exception {
+  account("Visible",true);
+  var response=http.perform(get("/api/discovery/recommendations").with(user(owner.email))).andExpect(status().isOk()).andReturn();
+  var item=JSON.readTree(response.getResponse().getContentAsString()).get("recommendations").get(0);
+  assertThat(item.get("feedbackToken").asText()).hasSize(36);
+  http.perform(post("/api/discovery/feedback").session((org.springframework.mock.web.MockHttpSession)response.getRequest().getSession(false)).with(user(owner.email)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(JSON.writeValueAsString(Map.of("token",item.get("feedbackToken").asText(),"rating","RELEVANT")))).andExpect(status().isNoContent());
+ }
  @Test void visibilityDefaultsPrivateAndNeedsAuthenticatedCsrf() throws Exception {
   http.perform(get("/api/profiles/me").with(user(owner.email))).andExpect(jsonPath("$.discoverable").value(false));
   http.perform(get("/api/discovery/recommendations")).andExpect(status().isUnauthorized());
@@ -73,7 +80,10 @@ class DiscoveryTest {
   var hidden=account("Private",false); var visible=account("Visible",true);
   var self=profiles.findById(owner.id).orElseThrow(); self.discoverable=true; profiles.saveAndFlush(self);
   var result=http.perform(get("/api/discovery/recommendations").with(user(owner.email))).andExpect(status().isOk()).andExpect(jsonPath("$.accountType").value("REAL")).andExpect(jsonPath("$.recommendations.length()").value(1)).andExpect(jsonPath("$.recommendations[0].candidate.id").value(visible.id.toString())).andReturn();
-  String body=result.getResponse().getContentAsString(); assertThat(body).doesNotContain("availability","timezone","password",visible.email,hidden.id.toString());
+  String body=result.getResponse().getContentAsString(); assertThat(body).doesNotContain("timezone","password",visible.email,hidden.id.toString());
+  var publicCandidate=JSON.readTree(body).get("recommendations").get(0).get("candidate");
+  assertThat(publicCandidate.has("availability")).isFalse();
+  assertThat(JSON.readTree(body).get("recommendations").get(0).get("contributions").get("availability").isNumber()).isTrue();
   var sent=JSON.readTree(received); assertThat(sent.get("candidates").size()).isEqualTo(1);
   assertThat(sent.get("candidates").get(0).get("id").asText()).isEqualTo(visible.id.toString());
   assertThat(sent.get("profile").get("id").asText()).isEqualTo(owner.id.toString());

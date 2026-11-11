@@ -1,5 +1,9 @@
 # TeamForge recommendation service
 
+## Challenge benchmark
+
+Run `python -m teamforge_ai.challenge` from this directory. It writes the reproducible authored-case comparison to `docs/evaluation/challenge-report.json`. See [methodology and feedback limitations](../docs/evaluation/README.md). Training and epoch selection use generated training/validation profiles, never challenge labels. The live model remains weighted scoring, with the v2.1 shared-week timezone correction; the trained logistic baseline is not promoted.
+
 Requires Python 3.11+ (verified locally with 3.14). From this directory:
 
 ```sh

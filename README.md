@@ -29,6 +29,10 @@ Vercel serves the frontend; the Render Free API can still sleep. Demo interactio
 
 The sections below include historical implementation checkpoints; the current hosted architecture and validation summary above supersede earlier local-only deployment statements.
 
+## Recommendation evaluation and feedback
+
+A reproducible [authored challenge benchmark](docs/evaluation/README.md) compares weighted ranking, a trained logistic baseline, and an availability ablation. The suite caught a cross-timezone calendar-week bug, corrected in weighted v2.1 without changing weights or promoting a learned model. Real members can optionally rate issued recommendations, export their ratings, and clear them in Account settings. Generated profiles never produce real feedback labels.
+
 ## Current implementation
 
 - React + TypeScript landing page and six-step interactive demo onboarding (Vite).

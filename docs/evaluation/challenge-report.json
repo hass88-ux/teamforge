@@ -1,0 +1,328 @@
+{
+  "dataset": "12 hand-labelled synthetic challenge cases; two candidates per query",
+  "referenceWeek": "2026-09-28",
+  "scorerVersion": "weighted-reciprocal-v2.1",
+  "selectedEpochs": 160,
+  "training": "Generated training profiles only; epoch selection uses generated validation profiles. Challenge cases are never used for fitting or selection.",
+  "results": {
+    "weighted": {
+      "meanNdcgAt2": 0.969244,
+      "topChoiceBestGrade": 11,
+      "rankingCases": 10,
+      "rankingOnlyMeanNdcgAt2": 0.963093,
+      "cases": [
+        {
+          "case": "complement-over-keyword-copy",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "The stated React need is fulfilled by the frontend collaborator, not another Java offer."
+        },
+        {
+          "case": "no-overlapping-hours",
+          "topCandidate": "no-time",
+          "topGrade": 0,
+          "ndcgAt2": 0.6309297535714575,
+          "eligibleCandidateCount": 2,
+          "rationale": "This scenario requires working together in the selected hours."
+        },
+        {
+          "case": "commitment-mismatch",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Eight hours per week is preferred over a forty-hour expectation."
+        },
+        {
+          "case": "provider-provider-exclusion",
+          "topCandidate": "seeker",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Providers must not be paired with providers."
+        },
+        {
+          "case": "seeker-seeker-exclusion",
+          "topCandidate": "provider",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Seekers must not be paired with seekers."
+        },
+        {
+          "case": "one-sided-role-interest",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Both sides should receive something they asked for."
+        },
+        {
+          "case": "different-timezone-same-instant",
+          "topCandidate": "utc-equivalent",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "The September reference week is UTC-4 in New York; compare instants, not clock labels."
+        },
+        {
+          "case": "description-keyword-trap",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Mentioning React in prose does not establish an offered skill."
+        },
+        {
+          "case": "goal-alignment",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "A portfolio collaborator is preferred, but a strong hackathon collaborator still has value."
+        },
+        {
+          "case": "missing-required-offer",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "A suitable role title alone does not supply the requested React skill."
+        },
+        {
+          "case": "collaborator-can-connect-to-provider",
+          "topCandidate": "available-provider",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Collaborator intent can connect to providers when complementary needs are met."
+        },
+        {
+          "case": "partial-availability",
+          "topCandidate": "full-overlap",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "More shared selected hours are preferred; partial overlap is still useful."
+        }
+      ]
+    },
+    "learned": {
+      "meanNdcgAt2": 0.821351,
+      "topChoiceBestGrade": 5,
+      "rankingCases": 10,
+      "rankingOnlyMeanNdcgAt2": 0.785621,
+      "cases": [
+        {
+          "case": "complement-over-keyword-copy",
+          "topCandidate": "same-stack",
+          "topGrade": 0,
+          "ndcgAt2": 0.6309297535714575,
+          "eligibleCandidateCount": 2,
+          "rationale": "The stated React need is fulfilled by the frontend collaborator, not another Java offer."
+        },
+        {
+          "case": "no-overlapping-hours",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "This scenario requires working together in the selected hours."
+        },
+        {
+          "case": "commitment-mismatch",
+          "topCandidate": "too-busy",
+          "topGrade": 1,
+          "ndcgAt2": 0.7098097413968655,
+          "eligibleCandidateCount": 2,
+          "rationale": "Eight hours per week is preferred over a forty-hour expectation."
+        },
+        {
+          "case": "provider-provider-exclusion",
+          "topCandidate": "seeker",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Providers must not be paired with providers."
+        },
+        {
+          "case": "seeker-seeker-exclusion",
+          "topCandidate": "provider",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Seekers must not be paired with seekers."
+        },
+        {
+          "case": "one-sided-role-interest",
+          "topCandidate": "one-sided",
+          "topGrade": 1,
+          "ndcgAt2": 0.7098097413968655,
+          "eligibleCandidateCount": 2,
+          "rationale": "Both sides should receive something they asked for."
+        },
+        {
+          "case": "different-timezone-same-instant",
+          "topCandidate": "utc-equivalent",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "The September reference week is UTC-4 in New York; compare instants, not clock labels."
+        },
+        {
+          "case": "description-keyword-trap",
+          "topCandidate": "keyword-stuffing",
+          "topGrade": 0,
+          "ndcgAt2": 0.6309297535714575,
+          "eligibleCandidateCount": 2,
+          "rationale": "Mentioning React in prose does not establish an offered skill."
+        },
+        {
+          "case": "goal-alignment",
+          "topCandidate": "different-goal",
+          "topGrade": 2,
+          "ndcgAt2": 0.8339912323981488,
+          "eligibleCandidateCount": 2,
+          "rationale": "A portfolio collaborator is preferred, but a strong hackathon collaborator still has value."
+        },
+        {
+          "case": "missing-required-offer",
+          "topCandidate": "wrong-offer",
+          "topGrade": 1,
+          "ndcgAt2": 0.7098097413968655,
+          "eligibleCandidateCount": 2,
+          "rationale": "A suitable role title alone does not supply the requested React skill."
+        },
+        {
+          "case": "collaborator-can-connect-to-provider",
+          "topCandidate": "unrelated",
+          "topGrade": 0,
+          "ndcgAt2": 0.6309297535714575,
+          "eligibleCandidateCount": 2,
+          "rationale": "Collaborator intent can connect to providers when complementary needs are met."
+        },
+        {
+          "case": "partial-availability",
+          "topCandidate": "full-overlap",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "More shared selected hours are preferred; partial overlap is still useful."
+        }
+      ]
+    },
+    "availability_guard": {
+      "meanNdcgAt2": 1.0,
+      "topChoiceBestGrade": 12,
+      "rankingCases": 10,
+      "rankingOnlyMeanNdcgAt2": 1.0,
+      "cases": [
+        {
+          "case": "complement-over-keyword-copy",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "The stated React need is fulfilled by the frontend collaborator, not another Java offer."
+        },
+        {
+          "case": "no-overlapping-hours",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "This scenario requires working together in the selected hours."
+        },
+        {
+          "case": "commitment-mismatch",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Eight hours per week is preferred over a forty-hour expectation."
+        },
+        {
+          "case": "provider-provider-exclusion",
+          "topCandidate": "seeker",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Providers must not be paired with providers."
+        },
+        {
+          "case": "seeker-seeker-exclusion",
+          "topCandidate": "provider",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 1,
+          "rationale": "Seekers must not be paired with seekers."
+        },
+        {
+          "case": "one-sided-role-interest",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Both sides should receive something they asked for."
+        },
+        {
+          "case": "different-timezone-same-instant",
+          "topCandidate": "utc-equivalent",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "The September reference week is UTC-4 in New York; compare instants, not clock labels."
+        },
+        {
+          "case": "description-keyword-trap",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Mentioning React in prose does not establish an offered skill."
+        },
+        {
+          "case": "goal-alignment",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "A portfolio collaborator is preferred, but a strong hackathon collaborator still has value."
+        },
+        {
+          "case": "missing-required-offer",
+          "topCandidate": "complement",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "A suitable role title alone does not supply the requested React skill."
+        },
+        {
+          "case": "collaborator-can-connect-to-provider",
+          "topCandidate": "available-provider",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "Collaborator intent can connect to providers when complementary needs are met."
+        },
+        {
+          "case": "partial-availability",
+          "topCandidate": "full-overlap",
+          "topGrade": 3,
+          "ndcgAt2": 1.0,
+          "eligibleCandidateCount": 2,
+          "rationale": "More shared selected hours are preferred; partial overlap is still useful."
+        }
+      ]
+    }
+  },
+  "promotion": "NONE: no learned model promotion. Weighted v2.1 corrects shared calendar-week alignment only; weights and eligibility are unchanged.",
+  "limitations": [
+    "Small authored diagnostic suite, not independent human judgement or a statistical generalization estimate.",
+    "Cases reuse a base profile; they are not independent samples and contain no real-user outcomes.",
+    "Availability guard is a diagnostic ablation designed for these cases, not a validated model improvement.",
+    "No description embeddings, language-model inference, or probability calibration."
+  ]
+}

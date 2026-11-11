@@ -45,7 +45,7 @@ class DiscoveryController {
   } catch (RestClientException ex) { throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Compatibility temporarily unavailable"); }
  }
  @GetMapping("/recommendations")
- Map<String,Object> recommendations(Authentication auth) {
+ Map<String,Object> recommendations(Authentication auth,jakarta.servlet.http.HttpSession session) {
   var owner=accounts.findByEmail(auth.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   var ownProfile=profiles.findById(owner.id).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,"Complete your profile first"));
   var page=profiles.findByDiscoverableTrueAndAccountIdNot(owner.id, PageRequest.of(0,200,Sort.by(Sort.Direction.DESC,"updatedAt").and(Sort.by("accountId"))));
@@ -77,6 +77,10 @@ class DiscoveryController {
    for (String field:PUBLIC_FIELDS) publicProfile.put(field,original.get(field));
    Map<String,Object> publicResult=new LinkedHashMap<>(); publicResult.put("candidate",publicProfile);
    for (String field:List.of("compatibility","forwardScore","reverseScore","evidence","contributions","modelVersion")) publicResult.put(field,item.get(field));
+   if (item.get("contributions") instanceof Map<?,?> features) {
+    String token=RecommendationFeedbackController.offer(session,owner.id,candidateId,number.intValue(),item.get("modelVersion") instanceof String version ? version : null,features);
+    if (token!=null) publicResult.put("feedbackToken",token);
+   }
    result.add(publicResult);
   }
   return Map.of("accountType","REAL","recommendations",result,"searchedProfileCount",candidates.size(),"poolLimited",page.getTotalElements()>200);

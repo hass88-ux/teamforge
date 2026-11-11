@@ -5,7 +5,7 @@ import random
 from datetime import datetime, timezone
 from pathlib import Path
 from .demo import PROFILES
-from .ranking import WEIGHTS, directional, intent_compatible, score
+from .ranking import WEIGHTS, MODEL_VERSION, directional, intent_compatible, score
 
 REFERENCE = datetime(2026, 9, 28, tzinfo=timezone.utc)
 FEATURES = list(WEIGHTS)
@@ -104,7 +104,7 @@ def run(output):
               'trainPairs': len(rows), 'positiveTrainPairs': sum(y for _, y in rows),
               'validationEpochTrials': [{'epochs': m['epochs'], **r} for m, r in zip(options, validation_results)],
               'selectedEpochs': model['epochs'], 'test': evaluate(test, model),
-              'limitations': ['Labels are hand-authored synthetic preferences, not human decisions.', 'Metrics measure agreement with this generator, not real-world matching quality.', 'No probability calibration or deployment claim.', 'No live model promotion; production keeps weighted-reciprocal-v2.']}
+              'limitations': ['Labels are hand-authored synthetic preferences, not human decisions.', 'Metrics measure agreement with this generator, not real-world matching quality.', 'No probability calibration or deployment claim.', 'No learned model promotion; production keeps ' + MODEL_VERSION + '.']}
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
     (output / 'synthetic-ranking-report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     (output / 'synthetic-ranking-model.json').write_text(json.dumps(model, indent=2) + '\n', encoding='utf-8')

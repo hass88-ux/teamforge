@@ -7,3 +7,7 @@ The optional GitHub connection is not implemented yet. No private GitHub reposit
 Owner-only export, password-confirmed deletion, and private recovery-key reset are implemented. Email verification, email recovery, retention policies, and a public privacy notice remain release work. The current local application is not a launched public account service. Fictional QA accounts used for local verification do not count as people or traction.
 
 Real decisions and conversations now persist. Only the two active matched members can access messages; existing matches remain when either user hides discovery visibility. Unmatching revokes access for both people and prevents further contact in this preview. Closed match/message records remain stored. No email notification or scripted reply is sent in real conversations. A public privacy notice, retention policy, are still release work.
+
+## Optional recommendation feedback
+
+Submitting Relevant or Not relevant saves your latest rating for that recommended real member, the scorer version, compatibility, and numeric scoring contributions for future evaluation. No profile prose or selected schedule slots are copied. Ratings do not currently train or change ranking. Export or clear your ratings in Account settings. Either related account deletion removes the record. No automatic retention period is configured. Only your own ratings are returned in your export.
