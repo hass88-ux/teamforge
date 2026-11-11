@@ -1,0 +1,9 @@
+# Vercel frontend deployment
+
+Use the existing GitHub repository, branch main, Root Directory `frontend`, framework Vite, `npm ci`, build `npm run build`, output `dist`. Configuration lives in frontend/vercel.json. No database secrets belong in frontend environment variables.
+
+The frontend is static on Vercel. Requests under /api are proxied to the existing Render Java service; Python stays private on Render and account records remain in Neon. Cookies are HttpOnly, Secure and host-only, so a new frontend domain requires signing in once. API responses must never be CDN-cached. Do not disable CSRF or expose the database to browsers.
+
+Vercel Hobby is limited to personal non-commercial use. Do not enable a paid trial or plan without owner instruction. Render Free cold starts still affect API requests; Vercel makes the public page independent of that startup. Validate the complete acceptance script against the new domain before promoting it as the primary URL. Keep the Render URL available for rollback.
+
+November 11 diagnostic: frontend build/lint and 13 tests pass; 57 Java tests pass. Render initially timed out, then health returned UP and the homepage returned HTTP 200. Anonymous account export returned 401. Fixed workspace session-expiry handling and added search/social descriptions. Search-engine indexing is not guaranteed by hosting; confirm the final public domain before adding canonical URLs, sitemap and Search Console verification. Brevo, moderator activation, manual backup/restore operations and real-user ranking evaluation remain outstanding.

@@ -30,6 +30,7 @@ export async function accountRequest(path: string, method = 'GET', body?: unknow
   }
   const response = await timedFetch(path, { method, credentials: 'same-origin', headers, body: body === undefined ? undefined : JSON.stringify(body) })
   if (response.status === 401 || response.status === 403 || (method !== 'GET' && /^\/api\/auth\/(login|signup|logout|recover)$/.test(path)) || (method === 'POST' && path === '/api/account/delete')) resetSecureSession()
+  if (response.status === 401 && !path.startsWith('/api/auth/')) window.dispatchEvent(new Event('teamforge:session-expired'))
   // Never automatically replay a write: a timed-out request may already have committed.
   return response
 }

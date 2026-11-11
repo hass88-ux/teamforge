@@ -4,7 +4,7 @@ const fetchMock = vi.fn()
 beforeEach(() => {
   resetSecureSession()
   vi.stubGlobal('fetch', fetchMock)
-  vi.stubGlobal('window', { setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout })
+  vi.stubGlobal('window', { setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout, dispatchEvent: vi.fn() })
 })
 afterEach(() => { vi.unstubAllGlobals(); fetchMock.mockReset(); vi.useRealTimers() })
 const token = () => new Response(JSON.stringify({ headerName: 'X-CSRF-TOKEN', token: 'secure-token' }))
@@ -26,11 +26,20 @@ test('login rotates cached token and rejected writes require an explicit retry',
 })
 test('bounded waiting aborts once and does not retry an uncertain write', async () => {
   vi.useFakeTimers()
-  vi.stubGlobal('window', { setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout })
+  vi.stubGlobal('window', { setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout, dispatchEvent: vi.fn() })
   fetchMock.mockImplementation((path: string, options: RequestInit) => path === '/api/auth/csrf' ? Promise.resolve(token()) : new Promise((_resolve, reject) => options.signal?.addEventListener('abort', () => reject(new Error('aborted')))))
   const request = accountRequest('/write', 'POST', {})
   const assertion = expect(request).rejects.toThrow('Check your latest activity')
   await vi.advanceTimersByTimeAsync(90001)
   await assertion
   expect(fetchMock.mock.calls.filter(([path]) => path === '/write')).toHaveLength(1)
+})
+
+test('expired private requests notify the workspace, but incorrect login does not', async () => {
+  fetchMock.mockImplementation(async (path: string) => path === '/api/auth/csrf' ? token() : new Response(null, { status: 401 }))
+  await accountRequest('/api/auth/login', 'POST', {})
+  expect(window.dispatchEvent).not.toHaveBeenCalled()
+  await accountRequest('/api/dashboard')
+  expect(window.dispatchEvent).toHaveBeenCalledTimes(1)
+  expect(vi.mocked(window.dispatchEvent).mock.calls[0][0].type).toBe('teamforge:session-expired')
 })

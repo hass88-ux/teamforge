@@ -119,3 +119,7 @@ The workspace now uses compact navigation, a clearer first-project dashboard, mo
 ## October 15 workspace additions
 
 The dashboard includes a Needs your attention section linking unread conversations, pending project invitations, and proposed coffee chats to their existing controls. Search filters loaded conversations by person/message and projects by name/stage without extra API requests. Search excludes older message history and projects outside the dashboard response limits. Brevo email verification remains pending provider setup and integration.
+
+## November 11 health and hosting update
+
+Expired private requests now return the workspace to login with a clear explanation, without replaying writes. Page descriptions improve search and sharing metadata. A Vercel frontend configuration proxies API requests to Render without caching account responses; see [deployment setup](docs/vercel-deployment.md). Moving the frontend does not eliminate Render API cold starts.

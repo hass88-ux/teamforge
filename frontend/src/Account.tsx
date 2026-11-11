@@ -46,6 +46,15 @@ export default function Account({ initialMode, onExit, onSignedInChange }: { ini
     return () => { active = false }
   }, [account])
   useEffect(() => { onSignedInChange(Boolean(account)) }, [account, onSignedInChange])
+  useEffect(() => {
+    if (!account) return
+    function expired() {
+      setAccount(null); setProfile(undefined); setSettings(false); setReviewing(false); setModerator(false)
+      setMode('login'); setPassword(''); setError('Your session expired. Please log in again. Your saved work is still here.')
+    }
+    window.addEventListener('teamforge:session-expired', expired)
+    return () => window.removeEventListener('teamforge:session-expired', expired)
+  }, [account])
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
