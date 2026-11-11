@@ -53,14 +53,14 @@ class Client:
             self.created = False
 
 
-def run(base):
+def run(base, health_base=None):
     parsed = urllib.parse.urlsplit(base)
     if parsed.scheme != 'https' and parsed.hostname not in ('127.0.0.1', 'localhost'):
         raise ValueError('Use HTTPS for hosted acceptance checks.')
     a, b, anonymous = Client(base), Client(base), Client(base)
     clients = (a, b)
     try:
-        assert anonymous.request('/actuator/health')['status'] == 'UP'
+        assert Client(health_base or base).request('/actuator/health')['status'] == 'UP'
         anonymous.request('/api/account/export', expected=401)
         anonymous.request('/api/moderation/reports', expected=401)
         for client, intent, skills, needs, role, sought in (
@@ -142,4 +142,4 @@ def run(base):
 
 
 if __name__ == '__main__':
-    run(sys.argv[1])
+    run(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
